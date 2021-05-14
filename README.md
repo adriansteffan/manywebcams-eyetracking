@@ -7,14 +7,14 @@ WIP: What exactly this version does
 
 
 ## Prerequisites
----
+
 [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/install/) are needed for both deployment and development.
 
 This project was developed and deployed on MacOS and Ubuntu systems. A setup guide for Microsoft Windows is in the works.
 
 
 ## Deployment
----
+
 After cloning the repository, you can build the project by running 
 
 ```
@@ -38,7 +38,7 @@ in the [prod](prod/) directory.
 Depending on your setup, you might want to change the ip mapping in [prod/docker-compose.yml](prod/docker-compose.yml). I recommend leaving it the way it is and pointing an apache reverse proxy or something similar to the specified port.
 
 ## Development
----
+
 ### Setup 
 
 As webgazers requires the usage of the https protocol, you will need a local server for development. This project comes with a docker-compose.yml file that takes care of the setup and configuration.
