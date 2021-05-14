@@ -12,7 +12,7 @@ if ($filetype === 'json') {
     die();
 }
 
-$name = '/output/' . $sanitized_filename . '.' .  $sanitized_filetype;
+$name = '/var/www/data/' . $sanitized_filename . '.' .  $sanitized_filetype;
 $data = $post_data['filedata'];
 file_put_contents($name, $data);
 ?>
