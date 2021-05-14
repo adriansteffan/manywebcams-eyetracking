@@ -41,7 +41,7 @@ Depending on your setup, you might want to change the ip mapping in [prod/docker
 
 ### Setup 
 
-As webgazers requires the usage of the https protocol, you will need a local server for development. This project comes with a docker-compose.yml file that takes care of the setup and configuration.
+As webgazers requires the usage of the https protocol, you will need a local server for development. This project comes with a [docker-compose.yml](docker-compose.yml) file that takes care of the setup and configuration.
 
 In order for https to work, we need an installation of open-ssl to create and sign a ssl certificate for localhost.
 
@@ -98,7 +98,7 @@ in the root directory.
 
 ## License
 
-This project is licensed under[GNU GPLv3](LICENSE.md) - see the [LICENSE.md](LICENSE.md) file for
+This project is licensed under the [GNU GPLv3](LICENSE.md) - see the [LICENSE.md](LICENSE.md) file for
 details
 
 
