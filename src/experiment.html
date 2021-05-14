@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Infant Eye Tracking</title>
+
+        <!-- Import JSZIP for downloading of trial data in development/testing setup -->
+        <script 
+            src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js" 
+            integrity="sha512-uVSVjE7zYsGz4ag0HEzfugJ78oHCI1KhdkivjQro8ABL/PRiEO4ROwvrolYAcZnky0Fl/baWKYilQfWvESliRA==" 
+            crossorigin="anonymous">
+        </script>
+
+        <script src="jspsych-6.3.1/jspsych.js"></script>
+        <script src="jspsych-6.3.1/examples/js/webgazer/webgazer.js"></script>
+        <script src="jspsych-6.3.1/plugins/jspsych-preload.js"></script>
+
+        <script src="jspsych-6.3.1/plugins/jspsych-html-keyboard-response.js"></script>
+        <script src="jspsych-6.3.1/plugins/jspsych-image-keyboard-response.js"></script>
+        <script src="jspsych-6.3.1/plugins/jspsych-video-keyboard-response.js"></script>
+        <script src="jspsych-6.3.1/plugins/jspsych-webgazer-calibrate.js"></script>
+        <script src="jspsych-6.3.1/plugins/jspsych-webgazer-init-camera.js"></script>
+        <script src="jspsych-6.3.1/plugins/jspsych-webgazer-validate.js"></script>
+
+        <script src="jspsych-6.3.1/extensions/jspsych-ext-webgazer.js"></script>
+        <script src="jspsych-6.3.1/extensions/jspsych-ext-webcam-recorder.js"></script>
+
+        <link href="jspsych-6.3.1/css/jspsych.css" rel="stylesheet" type="text/css">
+        <link href="patch.css" rel="stylesheet" type="text/css">
+    </head>
+    <body></body>
+    <script>
+
+        var downloadTrialData = false;
+
+        // save data locally on the server
+        function saveData(name, data){
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'write_data.php');
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send(JSON.stringify({filename: name, filedata: data, filetype: 'json'}));
+        }
+
+        var fam1Video = 'media/video/fam1.mp4';
+        var fam2Video = 'media/video/fam2.mp4';
+        var fb2Video = 'media/video/fb2.mp4';
+        var shapesVideo = 'media/video/shapes.mp4';
+
+        var preload = {
+            type: 'preload',
+            images: [],
+            audio: [],
+            videos: [fam1Video, fam2Video, fb2Video, shapesVideo]
+        }
+
+        var welcome = {
+            type: "html-keyboard-response",
+            stimulus: "Welcome to the experiment. Press any key to begin.",
+        };
+
+        var init_camera_trial = {
+            type: 'webgazer-init-camera',
+            
+        }
+
+        var calibration_trial = {
+            type: 'webgazer-calibrate',
+            calibration_points: [[12,50], ],// [50,50], [88,50], [50,12], [50,88], [25,50], [50,75], [75,50], [50,25]],
+            calibration_mode: 'view',
+            time_per_point: 1700,
+            extensions: [
+                    {
+                        type: 'webcam-recorder', 
+                        params: {
+                            videoName: "calibration"
+                        }
+                    }
+            ],
+            data: {
+                task: 'webgazer-calibrate',
+            }
+        }
+
+        var validation_trial = { 
+            type: 'webgazer-validate',
+            validation_points: [[-200,200], [200,200],[-200,-200],[200,-200]],
+            validation_point_coordinates: 'center-offset-pixels',
+            roi_radius: 130
+        }
+
+        var instructions = {
+            type: "html-keyboard-response",
+            stimulus: `
+                <p>Press any key to begin.</p>
+            `,
+            post_trial_gap: 1000
+            };
+            
+            var test_stimuli = [
+                //{ stimulus : [shapesVideo] },
+                { stimulus: [fam1Video] },
+                //{ stimulus: [fam2Video] },
+                //{ stimulus: [fb2Video] }
+            ];
+
+            var fixation = {
+                type: 'html-keyboard-response',
+                stimulus: '<div style="font-size:60px;">+</div>',
+                choices: jsPsych.NO_KEYS,
+                trial_duration: 2000,
+                data: {
+                    task: 'fixation',
+                    windowHeight: window.innerHeight,
+                    windowWidth: window.innerWidth,
+                },
+                extensions: [
+                    {
+                        type: 'webgazer', 
+                        params: { 
+                            targets: ['#scene']
+                        }
+                    }
+                ],
+            }
+
+            var video = {
+                type: "video-keyboard-response",
+                stimulus: jsPsych.timelineVariable('stimulus'),
+                autoplay: true,
+                controls: false,
+                height: window.innerHeight,
+                trial_ends_after_video: true,
+                choices: jsPsych.NO_KEYS,
+                data: {
+                    task: 'video',
+                    windowHeight: window.innerHeight,
+                    windowWidth: window.innerWidth,
+                },
+                extensions: [
+                    {
+                        type: 'webgazer', 
+                        params: { 
+                            targets: ['#scene']
+                        }
+                    },
+                    {
+                        type: 'webcam-recorder', 
+                        params: {
+                            videoName: jsPsych.timelineVariable('stimulus').toString().split("/").pop().split(".")[0]
+                        }
+                    }
+                ],
+            }
+
+            var test_procedure = {
+                timeline: [fixation, video],
+                timeline_variables: test_stimuli, // entire timeline is repeated for each of the stimuli variables, in order
+                repetitions: 1
+            }
+
+            
+
+            
+            var startFullscreen = {
+                type: 'fullscreen',
+                fullscreen_mode: true
+            }
+
+            var stopFullscreen = {
+                type: 'fullscreen',
+                fullscreen_mode: false
+            }
+
+        //var timeline = [preload, welcome, init_camera_trial, calibration_trial, validation_trial ];
+        var timeline = [preload, welcome, init_camera_trial, calibration_trial, instructions, ]//test_procedure];
+
+
+        jsPsych.init({
+            timeline: timeline,
+            use_webaudio: false,
+            on_finish: function() {
+                
+                if(downloadTrialData){
+                    var zip = new JSZip();
+                    zip.file("data.json", jsPsych.data.get().json());
+                    window.webcamVideoBlobs.forEach(({blob, name}, i) => {
+                        zip.file(videoName+".webm", blob);
+                    }); 
+
+                    zip.generateAsync({type:"blob"})
+                    .then(function(content) {
+                        var a = document.createElement('a');
+                        a.style.display = 'none';
+                        document.body.append(a);
+                        var url = URL.createObjectURL(content);
+                        a.href = url;
+                        a.download = "experiment.zip";
+                        a.click();
+                        URL.revokeObjectURL(url);
+                    });
+                }
+
+                
+                
+                saveData("experiment_data", jsPsych.data.get().json());
+                
+            },
+            extensions: [
+                {type: 'webgazer'}
+            ]
+        });
+    
+    </script>
+</html>
