@@ -7,4 +7,4 @@ services:
             - "127.0.0.1:8080:80"
         volumes:
             - "./local-server/webroot:/var/www/html"
-            - "./data:/output"
+            - "./data:/var/www/data"

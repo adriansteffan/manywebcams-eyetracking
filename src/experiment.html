@@ -15,14 +15,15 @@
         <script src="jspsych-6.3.1/plugins/jspsych-preload.js"></script>
 
         <script src="jspsych-6.3.1/plugins/jspsych-html-keyboard-response.js"></script>
-        <script src="jspsych-6.3.1/plugins/jspsych-image-keyboard-response.js"></script>
         <script src="jspsych-6.3.1/plugins/jspsych-video-keyboard-response.js"></script>
+        <script src="jspsych-6.3.1/plugins/jspsych-fullscreen.js"></script>
         <script src="jspsych-6.3.1/plugins/jspsych-webgazer-calibrate.js"></script>
         <script src="jspsych-6.3.1/plugins/jspsych-webgazer-init-camera.js"></script>
         <script src="jspsych-6.3.1/plugins/jspsych-webgazer-validate.js"></script>
 
         <script src="jspsych-6.3.1/extensions/jspsych-ext-webgazer.js"></script>
         <script src="jspsych-6.3.1/extensions/jspsych-ext-webcam-recorder.js"></script>
+        <script src="jspsych-6.3.1/extensions/jspsych-ext-background-audio.js"></script>
 
         <link href="jspsych-6.3.1/css/jspsych.css" rel="stylesheet" type="text/css">
         <link href="patch.css" rel="stylesheet" type="text/css">
@@ -30,49 +31,77 @@
     <body></body>
     <script>
 
-        var downloadTrialData = false;
+        var downloadTrialData = true;
 
         // save data locally on the server
-        function saveData(name, data){
+        function saveData(filetype, name, data){
             var xhr = new XMLHttpRequest();
             xhr.open('POST', 'write_data.php');
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.send(JSON.stringify({filename: name, filedata: data, filetype: 'json'}));
+            xhr.setRequestHeader('Content-Type', 'application/json'); 
+            if(filetype==="webm"){
+                var reader = new FileReader();
+                reader.readAsDataURL(data);  
+                reader.onloadend = () => {  
+                    xhr.send(JSON.stringify({filename: name, filedata: reader.result, filetype: filetype}));                
+                }
+            } else{
+                xhr.send(JSON.stringify({filename: name, filedata: data, filetype: filetype}));
+            }
+            
         }
 
-        var fam1Video = 'media/video/fam1.mp4';
-        var fam2Video = 'media/video/fam2.mp4';
-        var fb2Video = 'media/video/fb2.mp4';
-        var shapesVideo = 'media/video/shapes.mp4';
+
+        var shapesVideo = 'media/video/blueshapes.mp4';
 
         var preload = {
             type: 'preload',
             images: [],
             audio: [],
-            videos: [fam1Video, fam2Video, fb2Video, shapesVideo]
+            videos: [shapesVideo]
         }
 
         var welcome = {
             type: "html-keyboard-response",
-            stimulus: "Welcome to the experiment. Press any key to begin.",
+            stimulus: "TODO: Informed Consent, Instructions. Press any key to continue",
+        };
+
+        var end = {
+            type: "html-keyboard-response",
+            stimulus: "Thanks for participating! Press any key to submit and download your data",
         };
 
         var init_camera_trial = {
             type: 'webgazer-init-camera',
-            
+            instructions: `<p>(These text needs to change) Position your head so that the webcam has a good view of your eyes.</p>
+            <p>Center your face in the box and look directly towards the camera.</p>
+            <p>It is important that you try and keep your head reasonably still throughout the experiment, so please take a moment to adjust your setup to be comfortable.</p>
+            <p>When your face is centered in the box and the box is green, you can click to continue.</p>`,
+            button_text:"Start",
+            extensions: [
+                    {
+                        type: 'webcam-recorder', 
+                        params: {
+                            videoName: "webcam-init"
+                        }
+                    }
+            ],
         }
 
         var calibration_trial = {
             type: 'webgazer-calibrate',
-            calibration_points: [[12,50], ],// [50,50], [88,50], [50,12], [50,88], [25,50], [50,75], [75,50], [50,25]],
+            calibration_points: [[12,50], [50,50], [88,50], [50,12], [50,88], ],//[25,50], [50,75], [75,50], [50,25]],
             calibration_mode: 'view',
-            time_per_point: 1700,
+            time_per_point: 1600,
             extensions: [
                     {
                         type: 'webcam-recorder', 
                         params: {
                             videoName: "calibration"
                         }
+                    },
+                    {
+                        type: 'background-audio', 
+                        params: {}
                     }
             ],
             data: {
@@ -84,7 +113,19 @@
             type: 'webgazer-validate',
             validation_points: [[-200,200], [200,200],[-200,-200],[200,-200]],
             validation_point_coordinates: 'center-offset-pixels',
-            roi_radius: 130
+            roi_radius: 130,
+            extensions: [
+                    {
+                        type: 'webcam-recorder', 
+                        params: {
+                            videoName: "validation"
+                        }
+                    },
+                    {
+                        type: 'background-audio', 
+                        params: {}
+                    }
+            ],
         }
 
         var instructions = {
@@ -96,10 +137,7 @@
             };
             
             var test_stimuli = [
-                //{ stimulus : [shapesVideo] },
-                { stimulus: [fam1Video] },
-                //{ stimulus: [fam2Video] },
-                //{ stimulus: [fb2Video] }
+                { stimulus : [shapesVideo] },
             ];
 
             var fixation = {
@@ -109,8 +147,8 @@
                 trial_duration: 2000,
                 data: {
                     task: 'fixation',
-                    windowHeight: window.innerHeight,
-                    windowWidth: window.innerWidth,
+                    windowHeight: () => window.innerHeight,
+                    windowWidth: () => window.innerWidth,
                 },
                 extensions: [
                     {
@@ -127,13 +165,13 @@
                 stimulus: jsPsych.timelineVariable('stimulus'),
                 autoplay: true,
                 controls: false,
-                height: window.innerHeight,
+                width: () => window.innerWidth,
                 trial_ends_after_video: true,
                 choices: jsPsych.NO_KEYS,
                 data: {
                     task: 'video',
-                    windowHeight: window.innerHeight,
-                    windowWidth: window.innerWidth,
+                    windowHeight: () => window.innerHeight,
+                    windowWidth: () => window.innerWidth,
                 },
                 extensions: [
                     {
@@ -145,19 +183,17 @@
                     {
                         type: 'webcam-recorder', 
                         params: {
-                            videoName: jsPsych.timelineVariable('stimulus').toString().split("/").pop().split(".")[0]
+                            videoName: jsPsych.timelineVariable('stimulus'),
                         }
                     }
                 ],
             }
 
             var test_procedure = {
-                timeline: [fixation, video],
-                timeline_variables: test_stimuli, // entire timeline is repeated for each of the stimuli variables, in order
+                timeline: [video],
+                timeline_variables: test_stimuli,
                 repetitions: 1
             }
-
-            
 
             
             var startFullscreen = {
@@ -170,8 +206,17 @@
                 fullscreen_mode: false
             }
 
-        //var timeline = [preload, welcome, init_camera_trial, calibration_trial, validation_trial ];
-        var timeline = [preload, welcome, init_camera_trial, calibration_trial, instructions, ]//test_procedure];
+        var timeline = [
+            preload,
+            welcome,
+            startFullscreen, 
+            init_camera_trial, 
+            calibration_trial, 
+            validation_trial, 
+            test_procedure, 
+            stopFullscreen, 
+            end
+        ];
 
 
         jsPsych.init({
@@ -179,11 +224,35 @@
             use_webaudio: false,
             on_finish: function() {
                 
+                // video name is the stimulus filepath, clean that up
+                var nameFromMediaPath = function(path){
+                    return path.toString().split("/").pop().split(".")[0];
+                }
+
+                function createUUID(){
+                    /*We need a way to identify subjects that did not specify a if in the url
+                    a less messy aproach would be to generate these with a sophisticated backend server*/
+
+                    let dt = new Date().getTime()
+                    
+                    const uuid = 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                        const r = (dt + Math.random()*16)%16 | 0
+                        dt = Math.floor(dt/16)
+                        return (c=='x' ? r :(r&0x3|0x8)).toString(16)
+                    })
+                    
+                    return uuid
+                }
+
+                var subjectId = jsPsych.data.urlVariables().id;
+                var subjectString = (subjectId ? (subjectId) : createUUID())+"_";
+
+                
                 if(downloadTrialData){
                     var zip = new JSZip();
-                    zip.file("data.json", jsPsych.data.get().json());
+                    zip.file(subjectString+"data.json", jsPsych.data.get().json());
                     window.webcamVideoBlobs.forEach(({blob, name}, i) => {
-                        zip.file(videoName+".webm", blob);
+                        zip.file(subjectString+nameFromMediaPath(name)+".webm", blob);
                     }); 
 
                     zip.generateAsync({type:"blob"})
@@ -196,12 +265,15 @@
                         a.download = "experiment.zip";
                         a.click();
                         URL.revokeObjectURL(url);
+                        a.remove();
                     });
                 }
 
                 
-                
-                saveData("experiment_data", jsPsych.data.get().json());
+                saveData("json", subjectString+"data", jsPsych.data.get().json());
+                window.webcamVideoBlobs.forEach(({blob, name}, i) => {
+                    saveData("webm", subjectString+nameFromMediaPath(name), blob);
+                }); 
                 
             },
             extensions: [
@@ -211,3 +283,6 @@
     
     </script>
 </html>
+
+<!-- Something to think about: make choosing images/gifs for the fixation points optional-->
+<!-- Something to think about: improve the audio extension-->

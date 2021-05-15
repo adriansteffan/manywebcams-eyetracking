@@ -51,6 +51,8 @@ jsPsych.extensions['webcam-recorder'] = (function () {
               type: "video/webm"
             }),
           });
+
+          recording.remove()
           
         });
     

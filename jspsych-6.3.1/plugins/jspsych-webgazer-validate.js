@@ -141,7 +141,7 @@
     }
 
     function drawValidationPoint_CenterOffsetMode(x,y){
-      var pt_html = `<img src="media/img/rilakuma.gif" class="validation-point" id="calibration-point" style="width:${trial.point_size*6}px; position: absolute; transform: translate(-50%, -50%); left:calc(50% - ${trial.point_size/2}px + ${x}px); top:calc(50% - ${trial.point_size/2}px + ${y}px);"/>`
+      var pt_html = `<img src="media/img/rilakuma.gif" class="validation-point" id="calibration-point" style="width:${trial.point_size*5}px; position: absolute; transform: translate(-50%, -50%); left:calc(50% - ${trial.point_size/2}px + ${x}px); top:calc(50% - ${trial.point_size/2}px + ${y}px);"/>`
       return pt_html; //`<div class="validation-point" style="width:${trial.point_size}px; height:${trial.point_size}px; border-radius:${trial.point_size}px; border: 1px solid #000; background-color: #333; position: absolute; left:calc(50% - ${trial.point_size/2}px + ${x}px); top:calc(50% - ${trial.point_size/2}px + ${y}px);"></div>`
     }
 
