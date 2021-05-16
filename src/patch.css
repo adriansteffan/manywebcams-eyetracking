@@ -1,3 +1,13 @@
 .jspsych-content {
     max-width: unset;
 }
+
+/* An semi transparent canvas that is displayed over the page to aid with aoi debugging */
+#jspsych-webgazer-overlay-canvas{
+    position: absolute;
+    z-index: 2;
+    pointer-events: none;
+    width:100%;
+    height: 100%;
+    opacity: 0.3;
+  }

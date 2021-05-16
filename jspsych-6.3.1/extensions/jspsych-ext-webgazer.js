@@ -72,9 +72,32 @@ jsPsych.extensions['webgazer'] = (function () {
 
   // required, will be called when the trial starts (before trial loads)
   extension.on_start = function (params) {
+
+    //make params accessible to all functions in the file
+    state.params = params;
+
     state.currentTrialData = [];
     state.currentTrialTargets = {};
     state.currentTrialSelectors = params.targets;
+
+
+    if(params.aoiData && params.aoiData.debug){
+
+      state.overlayCanvas = document.createElement('canvas');
+      state.overlayCanvas.id = "jspsych-webgazer-overlay-canvas";
+      
+      let ctx = state.overlayCanvas.getContext("2d");
+
+      state.overlayCanvas.width = window.innerWidth * window.devicePixelRatio;
+      state.overlayCanvas.height = window.innerHeight * window.devicePixelRatio;
+      state.overlayCanvas.style.width = window.innerWidth;
+      state.overlayCanvas.style.height = window.innerHeight;
+
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+      document.body.appendChild(state.overlayCanvas);
+
+    }
 
     state.domObserver.observe(jsPsych.getDisplayElement(), {childList: true})
     
@@ -110,11 +133,40 @@ jsPsych.extensions['webgazer'] = (function () {
     // set internal flag
     state.activeTrial = false;
 
-    // send back the gazeData
-    return {
-      webgazer_data: state.currentTrialData,
-      webgazer_targets: state.currentTrialTargets
+    if(state.params && state.params.aoiData && state.params.aoiData.debug){
+      state.overlayCanvas.remove();
     }
+
+    if(params.aoiData.aois){
+      state.currentTrialData.forEach(
+        (datapt) => {
+          params.aoiData.aois.forEach((aoi) => {
+            if(
+              (aoi.startat && datapt.t < aoi.startat) || // inactive
+              (aoi.stopat && datapt.t > aoi.stopat) ||
+              (aoi.type === "circle" && ((aoi.posx - datapt.x) ** 2 + (aoi.posy - datapt.y) ** 2 > aoi.radius**2)) || // not hit
+              (aoi.type === "rect" && 
+                !(aoi.posx < datapt.x && datapt.x < aoi.posx + aoi.width && aoi.posy < datapt.y && datapt.y < aoi.posy + aoi.height)
+              )
+            ){return;}
+  
+            if(!datapt.hitAois){datapt.hitAois = [];}
+            datapt.hitAois.push(aoi.name);
+  
+          });
+        }
+      );
+    }
+    
+    let gazeData = {
+      webgazer_data: state.currentTrialData,
+      webgazer_targets: state.currentTrialTargets 
+    }
+    if(params && params.aoiData && params.aoiData.aois) {
+      gazeData.aois = params.aoiData.aois;
+    }
+    // send back the gazeData
+    return gazeData;
   }
 
   extension.start = function () {
@@ -228,6 +280,8 @@ jsPsych.extensions['webgazer'] = (function () {
   }
 
   function handleGazeDataUpdate(gazeData, elapsedTime) {
+
+    
     if (gazeData !== null){
       var d = {
         x: state.round_predictions ? Math.round(gazeData.x) : gazeData.x,
@@ -243,6 +297,33 @@ jsPsych.extensions['webgazer'] = (function () {
       for(var i=0; i<state.gazeUpdateCallbacks.length; i++){
         state.gazeUpdateCallbacks[i](d);
       }
+
+      /* redraw area of interest in debugging mode
+       (the edraw is necessary because some aois might only appear for a short while) */ 
+      if(state.params && state.params.aoiData && state.params.aoiData.debug){
+        let ctx = state.overlayCanvas.getContext("2d");
+        ctx.clearRect(0, 0, window.innerWidth, window.innerWidth);
+
+        state.params.aoiData.aois.forEach(
+          (aoi) => {
+            let t = Math.round(gazeData.t - state.currentTrialStart);
+            if((aoi.startat && t < aoi.startat) || (aoi.stopat && t > aoi.stopat)){
+              return;
+            }
+
+            ctx.fillStyle = aoi.debugColor;
+            if(aoi.type === "rect"){
+              ctx.fillRect(aoi.posx, aoi.posy, aoi.width, aoi.height);
+            }else if(aoi.type === "circle"){
+              ctx.beginPath();
+              ctx.arc(aoi.posx, aoi.posy, aoi.radius, 0, 2 * Math.PI);
+              ctx.fill();
+            }
+            
+          }
+        );
+      }
+
     } else {
       state.currentGaze = null;
     }

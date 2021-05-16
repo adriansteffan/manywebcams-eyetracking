@@ -32,6 +32,8 @@
     <script>
 
         var downloadTrialData = true;
+        var aoiDebug = true;
+        var printDataDebug = true;
 
         // save data locally on the server
         function saveData(filetype, name, data){
@@ -177,7 +179,34 @@
                     {
                         type: 'webgazer', 
                         params: { 
-                            targets: ['#scene']
+                            targets: ['#scene'],
+                            aoiData: {
+                                debug: aoiDebug,
+                                aois: [
+                                    {
+                                        name: "bluer",
+                                        type: "rect",
+                                        posx: 0,
+                                        posy: 0,
+                                        width: window.innerWidth*0.5,
+                                        height: 500,
+                                        startat: null,
+                                        stopat: null,
+                                        debugColor: "blue",
+                                    },
+                                    {
+                                        name: "redc",
+                                        type: "circle",
+                                        posx: 900,
+                                        posy: 600,
+                                        radius: 100,
+                                        startat: 3000,
+                                        stopat: 7000,
+                                        debugColor: "red",
+                                    },
+                                ],
+                                
+                            }
                         }
                     },
                     {
@@ -223,7 +252,11 @@
             timeline: timeline,
             use_webaudio: false,
             on_finish: function() {
-                
+
+                if(printDataDebug){
+                    jsPsych.data.displayData();
+                }
+
                 // video name is the stimulus filepath, clean that up
                 var nameFromMediaPath = function(path){
                     return path.toString().split("/").pop().split(".")[0];
