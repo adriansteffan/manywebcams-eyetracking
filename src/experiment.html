@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Infant Eye Tracking</title>
+        <title>MB2 Eye Tracking</title>
 
         <!-- Import JSZIP for downloading of trial data in development/testing setup -->
         <script 
@@ -29,11 +29,7 @@
         <link href="patch.css" rel="stylesheet" type="text/css">
     </head>
     <body></body>
-    <script>
-
-        var downloadTrialData = true;
-        var aoiDebug = true;
-        var printDataDebug = true;
+    <script>        
 
         // save data locally on the server
         function saveData(filetype, name, data){
@@ -49,17 +45,104 @@
             } else{
                 xhr.send(JSON.stringify({filename: name, filedata: data, filetype: filetype}));
             }
+        }
+
+        function createUUID(){
+            /*We need a way to identify subjects that did not specify an id in the url
+            a less messy aproach would be to generate these with a sophisticated backend server*/
+
+            let dt = new Date().getTime()
             
+            const uuid = 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = (dt + Math.random()*16)%16 | 0
+                dt = Math.floor(dt/16)
+                return (c=='x' ? r :(r&0x3|0x8)).toString(16)
+            })
+            return uuid
         }
 
 
-        var shapesVideo = 'media/video/blueshapes.mp4';
+        var videos = {  
+            FAM_LL: 'media/video/FAM_LL.mp4',
+            FAM_LR: 'media/video/FAM_LR.mp4',
+            FAM_RL: 'media/video/FAM_RL.mp4',
+            FAM_RR: 'media/video/FAM_RR.mp4',
+            IG_LL: 'media/video/IG_LL.mp4',
+            IG_LR: 'media/video/IG_LR.mp4',
+            IG_RL: 'media/video/IG_RL.mp4',
+            IG_RR: 'media/video/IG_RR.mp4',
+            KNOW_LL: 'media/video/KNOW_LL.mp4',
+            KNOW_LR: 'media/video/KNOW_LR.mp4',
+            KNOW_RL: 'media/video/KNOW_RL.mp4',
+            KNOW_RR: 'media/video/KNOW_RR.mp4',
+        }
+
+        var familiarizationOrders = {
+            A: [videos.FAM_LR, videos.FAM_RR, videos.FAM_LL, videos.FAM_RR],
+            B: [videos.FAM_RR, videos.FAM_LL, videos.FAM_LR, videos.FAM_RR]
+        }
+
+        var trialOrders = {
+            1: ["A", videos.KNOW_RR, videos.IG_RR],
+            2: ["B", videos.KNOW_RL, videos.IG_RR],
+            3: ["A", videos.KNOW_LR, videos.IG_RR],
+            4: ["B", videos.KNOW_LL, videos.IG_RR],
+            5: ["A", videos.KNOW_RR, videos.IG_RL],
+            6: ["B", videos.KNOW_RL, videos.IG_RL],
+            7: ["A", videos.KNOW_LR, videos.IG_RL],
+            8: ["B", videos.KNOW_LL, videos.IG_RL],
+            9: ["A", videos.IG_RR, videos.KNOW_LR],
+            10: ["B", videos.IG_RL, videos.KNOW_LR],
+            11: ["A", videos.IG_LR, videos.KNOW_LR],
+            12: ["B", videos.IG_LL, videos.KNOW_LR],
+            13: ["A", videos.IG_RR, videos.KNOW_LL],
+            14: ["B", videos.IG_RL, videos.KNOW_LL],
+            15: ["A", videos.IG_LR, videos.KNOW_LL],
+            16: ["B", videos.IG_LL, videos.KNOW_LL],
+            17: ["A", videos.IG_RR, videos.KNOW_RR],
+            18: ["B", videos.IG_RL, videos.KNOW_RR],
+            19: ["A", videos.IG_LR, videos.KNOW_RR],
+            20: ["B", videos.IG_LL, videos.KNOW_RR],
+            21: ["A", videos.IG_RR, videos.KNOW_RL],
+            22: ["B", videos.IG_RL, videos.KNOW_RL],
+            23: ["A", videos.IG_LR, videos.KNOW_RL],
+            24: ["B", videos.IG_LL, videos.KNOW_RL],
+            25: ["A", videos.KNOW_RR, videos.IG_LR],
+            26: ["B", videos.KNOW_RL, videos.IG_LR],
+            27: ["A", videos.KNOW_LR, videos.IG_LR],
+            28: ["B", videos.KNOW_LL, videos.IG_LR],
+            29: ["A", videos.KNOW_RR, videos.IG_LL],
+            30: ["B", videos.KNOW_RL, videos.IG_LL],
+            31: ["A", videos.KNOW_LR, videos.IG_LL],
+            32: ["B", videos.KNOW_LL, videos.IG_LL],    
+        }
+
+        var trialOrder = parseInt(jsPsych.data.urlVariables().trial_order);
+        
+        if(isNaN(trialOrder) || trialOrder <= 0 || trialOrder > Object.keys(trialOrders).length){
+            const random = (min, max) => Math.floor(Math.random() * (max - min)) + min;
+            trialOrder = random(1, Object.keys(trialOrders).length);
+        }
+        
+        var stimuliUsed = trialOrders[trialOrder];
+        var famUsed = familiarizationOrders[stimuliUsed[0]];
+
+        var subjectId = jsPsych.data.urlVariables().id;
+        var subjectString = (subjectId ? (subjectId) : createUUID())+"_";
+
+        var downloadTrialData = false || !!(jsPsych.data.urlVariables().download_data);
+        var aoiDebug = false || !!(jsPsych.data.urlVariables().show_aoi);
+        var printDataDebug = false || !!(jsPsych.data.urlVariables().print_data);
+        var preventDataUpload = false || !!(jsPsych.data.urlVariables().prevent_upload);
+        
+
 
         var preload = {
             type: 'preload',
             images: [],
             audio: [],
-            videos: [shapesVideo]
+            // stimuliUsed[0] is the identifier for the familiarization trial order used
+            videos: [stimuliUsed[1], stimuliUsed[2]].concat(famUsed) 
         }
 
         var welcome = {
@@ -69,7 +152,7 @@
 
         var end = {
             type: "html-keyboard-response",
-            stimulus: "Thanks for participating! Press any key to submit and download your data",
+            stimulus: "Thanks for participating! Press any key to submit your data",
         };
 
         var init_camera_trial = {
@@ -89,7 +172,7 @@
             ],
         }
 
-        var calibration_trial = {
+        var calibration1_trial = {
             type: 'webgazer-calibrate',
             calibration_points: [[12,50], [50,50], [88,50], [50,12], [50,88], ],//[25,50], [50,75], [75,50], [50,25]],
             calibration_mode: 'view',
@@ -136,113 +219,133 @@
                 <p>Press any key to begin.</p>
             `,
             post_trial_gap: 1000
-            };
+        };
             
-            var test_stimuli = [
-                { stimulus : [shapesVideo] },
-            ];
+        
 
-            var fixation = {
-                type: 'html-keyboard-response',
-                stimulus: '<div style="font-size:60px;">+</div>',
-                choices: jsPsych.NO_KEYS,
-                trial_duration: 2000,
-                data: {
-                    task: 'fixation',
-                    windowHeight: () => window.innerHeight,
-                    windowWidth: () => window.innerWidth,
-                },
-                extensions: [
-                    {
-                        type: 'webgazer', 
-                        params: { 
-                            targets: ['#scene']
+        var fixation = {
+            type: 'html-keyboard-response',
+            stimulus: '<div style="font-size:60px;">+</div>',
+            choices: jsPsych.NO_KEYS,
+            trial_duration: 2000,
+            data: {
+                task: 'fixation',
+                windowHeight: () => window.innerHeight,
+                windowWidth: () => window.innerWidth,
+            },
+            extensions: [
+                {
+                    type: 'webgazer', 
+                    params: { 
+                        targets: ['#scene']
+                    }
+                }
+            ],
+        }
+
+        var video = {
+            type: "video-keyboard-response",
+            stimulus: jsPsych.timelineVariable('stimulus'),
+            autoplay: true,
+            controls: false,
+            height: () => window.innerHeight,
+            trial_ends_after_video: true,
+            choices: jsPsych.NO_KEYS,
+            data: {
+                task: 'video',
+                windowHeight: () => window.innerHeight,
+                windowWidth: () => window.innerWidth,
+            },
+            extensions: [
+                {
+                    type: 'webgazer', 
+                    params: { 
+                        targets: ['#scene'],
+                        aoiData: {
+                            debug: aoiDebug,
+                            aois: [
+                                {
+                                    name: "blue_rectangle_bottom_left",
+                                    type: "rect",
+                                    rposx: 0,
+                                    rposy: 0.55,
+                                    rwidth: 0.4,
+                                    rheight: 0.45,
+                                    startat: null,
+                                    stopat: null,
+                                    debugColor: "blue",
+                                },
+                                {
+                                    name: "blue_rectangle_bottom_right",
+                                    type: "rect",
+                                    rposx: 0.6,
+                                    rposy: 0.55,
+                                    rwidth: 0.4,
+                                    rheight: 0.45,
+                                    startat: null,
+                                    stopat: null,
+                                    debugColor: "blue",
+                                },
+                            ],
+                            
                         }
                     }
-                ],
-            }
-
-            var video = {
-                type: "video-keyboard-response",
-                stimulus: jsPsych.timelineVariable('stimulus'),
-                autoplay: true,
-                controls: false,
-                width: () => window.innerWidth,
-                trial_ends_after_video: true,
-                choices: jsPsych.NO_KEYS,
-                data: {
-                    task: 'video',
-                    windowHeight: () => window.innerHeight,
-                    windowWidth: () => window.innerWidth,
                 },
-                extensions: [
-                    {
-                        type: 'webgazer', 
-                        params: { 
-                            targets: ['#scene'],
-                            aoiData: {
-                                debug: aoiDebug,
-                                aois: [
-                                    {
-                                        name: "bluer",
-                                        type: "rect",
-                                        posx: 200,
-                                        posy: window.innerHeight*0.3,
-                                        width: window.innerWidth*0.3,
-                                        height: 500,
-                                        startat: null,
-                                        stopat: null,
-                                        debugColor: "blue",
-                                    },
-                                    {
-                                        name: "redc",
-                                        type: "circle",
-                                        posx: 900,
-                                        posy: 600,
-                                        radius: 100,
-                                        startat: null,
-                                        stopat: null,
-                                        debugColor: "red",
-                                    },
-                                ],
-                                
-                            }
-                        }
-                    },
-                    {
-                        type: 'webcam-recorder', 
-                        params: {
-                            videoName: jsPsych.timelineVariable('stimulus'),
-                        }
+                {
+                    type: 'webcam-recorder', 
+                    params: {
+                        videoName: jsPsych.timelineVariable('stimulus'),
                     }
-                ],
-            }
+                }
+            ],
+        }
 
-            var test_procedure = {
-                timeline: [video],
-                timeline_variables: test_stimuli,
-                repetitions: 1
-            }
 
+        var fam_stimuli = [
+            { stimulus : [famUsed[0]] },
+            { stimulus : [famUsed[1]] },
+            { stimulus : [famUsed[2]] },
+            { stimulus : [famUsed[3]] },
+        ];
+
+        var test_stimuli = [
+            { stimulus : [ stimuliUsed[1] ] },
+            { stimulus : [ stimuliUsed[2] ] },
+        ];
+
+        var fam_videos = {
+            timeline: [video],
+            timeline_variables: fam_stimuli,
+            repetitions: 1
+        }
             
-            var startFullscreen = {
-                type: 'fullscreen',
-                fullscreen_mode: true
-            }
+        var test_videos = {
+            timeline: [video],
+            timeline_variables: test_stimuli,
+            repetitions: 1
+        }
 
-            var stopFullscreen = {
-                type: 'fullscreen',
-                fullscreen_mode: false
-            }
+        
+        var startFullscreen = {
+            type: 'fullscreen',
+            fullscreen_mode: true
+        }
+
+        var stopFullscreen = {
+            type: 'fullscreen',
+            fullscreen_mode: false
+        }
 
         var timeline = [
             preload,
             welcome,
             startFullscreen, 
             init_camera_trial, 
-            calibration_trial, 
-            validation_trial, 
-            test_procedure, 
+            calibration1_trial, 
+            //validation_trial,
+            fam_videos,
+            //calibration2_trial, 
+            test_videos, 
             stopFullscreen, 
             end
         ];
@@ -257,35 +360,17 @@
                     jsPsych.data.displayData();
                 }
 
-                // video name is the stimulus filepath, clean that up
+                // video name is the stimulus filepath, cleaning that up
                 var nameFromMediaPath = function(path){
                     return path.toString().split("/").pop().split(".")[0];
                 }
 
-                function createUUID(){
-                    /*We need a way to identify subjects that did not specify a if in the url
-                    a less messy aproach would be to generate these with a sophisticated backend server*/
-
-                    let dt = new Date().getTime()
-                    
-                    const uuid = 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                        const r = (dt + Math.random()*16)%16 | 0
-                        dt = Math.floor(dt/16)
-                        return (c=='x' ? r :(r&0x3|0x8)).toString(16)
-                    })
-                    
-                    return uuid
-                }
-
-                var subjectId = jsPsych.data.urlVariables().id;
-                var subjectString = (subjectId ? (subjectId) : createUUID())+"_";
-
                 
                 if(downloadTrialData){
                     var zip = new JSZip();
-                    zip.file(subjectString+"data.json", jsPsych.data.get().json());
+                    zip.file(subjectString+trialOrder+"_data.json", jsPsych.data.get().json());
                     window.webcamVideoBlobs.forEach(({blob, name}, i) => {
-                        zip.file(subjectString+nameFromMediaPath(name)+".webm", blob);
+                        zip.file(subjectString+trialOrder+"_"+nameFromMediaPath(name)+".webm", blob);
                     }); 
 
                     zip.generateAsync({type:"blob"})
@@ -302,12 +387,12 @@
                     });
                 }
 
-                
-                saveData("json", subjectString+"data", jsPsych.data.get().json());
-                window.webcamVideoBlobs.forEach(({blob, name}, i) => {
-                    saveData("webm", subjectString+nameFromMediaPath(name), blob);
-                }); 
-                
+                if(!preventDataUpload){
+                    saveData("json", subjectString+trialOrder+"_data", jsPsych.data.get().json());
+                    window.webcamVideoBlobs.forEach(({blob, name}, i) => {
+                        saveData("webm", subjectString+trialOrder+"_"+nameFromMediaPath(name), blob);
+                    }); 
+                }
             },
             extensions: [
                 {type: 'webgazer'}

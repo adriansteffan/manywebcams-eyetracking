@@ -8,6 +8,15 @@ jsPsych.extensions['webgazer'] = (function () {
   // so that state manipulations are checked.
   var state = {};
 
+  var scaleToScreen= function(aoi){
+    aoi.posx = aoi.rposx*window.innerWidth;
+    aoi.posy = aoi.rposy*window.innerHeight;
+
+    aoi.width = aoi.rwidth*window.innerWidth;
+    aoi.height = aoi.rheight*window.innerHeight;
+
+  }
+
   // required, will be called at jsPsych.init
   // should return a Promise
   extension.initialize = function (params) {
@@ -97,6 +106,8 @@ jsPsych.extensions['webgazer'] = (function () {
 
       document.body.appendChild(state.overlayCanvas);
 
+      params.aoiData.aois.forEach((aoi) => scaleToScreen(aoi));
+
     }
 
     state.domObserver.observe(jsPsych.getDisplayElement(), {childList: true})
@@ -141,12 +152,18 @@ jsPsych.extensions['webgazer'] = (function () {
       state.currentTrialData.forEach(
         (datapt) => {
           params.aoiData.aois.forEach((aoi) => {
+
+            scaleToScreen(aoi);
             if(
               (aoi.startat && datapt.t < aoi.startat) || // inactive
               (aoi.stopat && datapt.t > aoi.stopat) ||
               (aoi.type === "circle" && ((aoi.posx - datapt.x) ** 2 + (aoi.posy - datapt.y) ** 2 > aoi.radius**2)) || // not hit
               (aoi.type === "rect" && 
-                !(aoi.posx < datapt.x && datapt.x < aoi.posx + aoi.width && aoi.posy < datapt.y && datapt.y < aoi.posy + aoi.height)
+                !(aoi.posx < datapt.x &&
+                  datapt.x < aoi.posx + aoi.width &&
+                   aoi.posy < datapt.y &&
+                    datapt.y < aoi.posy + aoi.height
+                )
               )
             ){return;}
   
@@ -281,7 +298,6 @@ jsPsych.extensions['webgazer'] = (function () {
 
   function handleGazeDataUpdate(gazeData, elapsedTime) {
 
-    
     if (gazeData !== null){
       var d = {
         x: state.round_predictions ? Math.round(gazeData.x) : gazeData.x,
@@ -297,6 +313,7 @@ jsPsych.extensions['webgazer'] = (function () {
       for(var i=0; i<state.gazeUpdateCallbacks.length; i++){
         state.gazeUpdateCallbacks[i](d);
       }
+
 
       /* redraw area of interest in debugging mode
        (the edraw is necessary because some aois might only appear for a short while) */ 
@@ -314,6 +331,7 @@ jsPsych.extensions['webgazer'] = (function () {
             ctx.fillStyle = aoi.debugColor;
             if(aoi.type === "rect"){
               ctx.fillRect(aoi.posx, aoi.posy, aoi.width, aoi.height);
+          
             }else if(aoi.type === "circle"){
               ctx.beginPath();
               ctx.arc(aoi.posx, aoi.posy, aoi.radius, 0, 2 * Math.PI);
