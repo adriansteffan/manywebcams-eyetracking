@@ -118,7 +118,7 @@ For example, to if you want the output data to be linked to a participant with t
 yoururl.com?id=participant1&trial_order=5
 ```
 
-The following table gives you a overview of all available parameters:
+The following table gives you an overview of all available parameters:
 
 | url parameter  | possible values| default value |  description |
 | ------------- | ------------- | ------------- | ------------- |
