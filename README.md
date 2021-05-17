@@ -3,9 +3,9 @@
 This repository is created as a part of the [ManyBabies2](https://manybabies.github.io/MB2/) project, a collaborative effort that investigates Theory of Mind (the ability to ascribe mental states to agents) in infants.
 
 The code in this repo is used to run an online pilot study that aims to further test the reliability of implicit/non-verbal ToM measures based on eye tracking.
-Due to the restrictions of the pandemic, conducting in-lab study using conventional eye trackers is considerably more difficult than usual. We, therefore, employ an in-browser solution to determine if webcam-based eye tracking can help partially answer some of our questions regarding implicit ToM measures. 
+Due to the restrictions of the pandemic, conducting in-lab studies using conventional eye trackers is considerably more difficult than usual. We therefore employ an in-browser solution to determine if webcam-based eye tracking can help partially answer some of our questions regarding implicit ToM measures. 
 
-(Todo: Link to relevant article, better description of trials presented, better description of what to do if I someone wants to replicate this in their lab)
+(Todo: Link to relevant article, better description of trials presented, better description of what to do if someone wants to replicate this in their lab)
 
 ## Table of Contents
 
