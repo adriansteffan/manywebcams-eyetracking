@@ -4,9 +4,24 @@ This repository is created as a part of the [ManyBabies2](https://manybabies.git
 
 WIP: What exactly this version does
 
+## Table of Contents
+
+* [Installation](#Prerequisites)
+  * [Prerequisites](#Prerequisites)
+  * [Deployment](#Deployment)
+  * [Development Setup](#Prerequisites)
+* [Usage](<#Usage Instructions>)
+* [Misc](<#Built with>)
+  * [Built with](<#Built with>)
+  * [Changes to jsPsych-6.3.1](<#Changes to jsPsych-6.3.1>)
+  * [Authors](#Authors)
+  * [License](#License)
+
 
 
 ## Prerequisites
+
+As this repository contains video files served over github lfs, the [git-lfs](https://git-lfs.github.com/) extension needs to be installed and activated.
 
 [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/install/) are needed for both deployment and development.
 
@@ -36,6 +51,7 @@ docker-compose up -d
 in the [prod](prod/) directory.
 
 Depending on your setup, you might want to change the ip mapping in [prod/docker-compose.yml](prod/docker-compose.yml). I recommend leaving it the way it is and pointing an apache reverse proxy or something similar to the specified port.
+
 
 ## Development
 
@@ -85,15 +101,21 @@ When initially cloning the project and after making changes , update the files i
 
 in the root directory.
 
+## Usage Instructions
+
+After deploying the container, there are a few options 
+
 ## Built With
 
   - [jsPsych](https://www.jspsych.org/) - A modified version of jspsych-6.3.1 is used for the general trial structure and webgazers integration
   - [webgazers.js](https://webgazer.cs.brown.edu/) - The eye tracking library used to capture gaze coordinated via a webcam
 
+## Changes to jspsych-6.3.1
 
 ## Authors
 
 - **Adrian Steffan** [adriansteffan](https://github.com/adriansteffan)
+- **Tobias Schuwerk** [tobias]
 
 
 ## License
