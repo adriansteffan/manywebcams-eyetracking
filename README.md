@@ -14,7 +14,7 @@ Due to the restrictions of the pandemic, conducting in-lab study using conventio
   * [Deployment](#Deployment)
   * [Development Setup](#Prerequisites)
 * [Usage](<#Usage Instructions>)
-  * [URL parameters](<#URL parameters>)
+  * [URL parameters](<#URL-parameters>)
   * [Saved data](<#Saved data>)
 * [Misc](<#Built with>)
   * [Built with](<#Built with>)
