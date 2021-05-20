@@ -2,6 +2,10 @@
     max-width: unset;
 }
 
+.jspsych-display-element{
+    overflow-y: hidden;
+}
+
 /* An semi transparent canvas that is displayed over the page to aid with aoi debugging */
 #jspsych-webgazer-overlay-canvas{
     position: absolute;

@@ -370,6 +370,8 @@
             on_finish: function() {
 
                 if(printDataDebug){
+                    var jspsychelemnt = document.querySelector(".jspsych-display-element");
+                    jspsychelemnt.style.overflowY = "auto";
                     jsPsych.data.displayData();
                 }
 

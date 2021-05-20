@@ -41,7 +41,7 @@ After cloning the repository, you can build the project by running
 ./build-container.sh
 ```
 
-in the [prod](prod/) directory. 
+in the [prod_mb2-webcam-eyetracking](prod_mb2-webcam-eyetracking/) directory. 
 This will automatically start the webserver serving the app, you can stop it with
 ```
 docker-compose down
@@ -53,9 +53,9 @@ and later restart it with
 docker-compose up -d
 ```
 
-in the [prod](prod/) directory.
+in the [prod_mb2-webcam-eyetracking](prod_mb2-webcam-eyetracking/) directory.
 
-Depending on your setup, you might want to change the ip mapping in [prod/docker-compose.yml](prod/docker-compose.yml). I recommend leaving it the way it is and pointing an apache reverse proxy or something similar to the specified port.
+Depending on your setup, you might want to change the ip mapping in [prod_mb2-webcam-eyetracking/docker-compose.yml](prod_mb2-webcam-eyetracking/docker-compose.yml). I recommend leaving it the way it is and pointing an apache reverse proxy or something similar to the specified port.
 
 
 ## Development
