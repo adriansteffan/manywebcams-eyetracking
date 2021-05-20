@@ -1,6 +1,6 @@
 version: "3"
 services:
-    webserver:
+    mb2-webcam-eyetracking:
         build: .
         ports: 
             - "127.0.0.1:10630:80"

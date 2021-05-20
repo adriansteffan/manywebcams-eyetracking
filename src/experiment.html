@@ -155,9 +155,22 @@
             stimulus: "Thanks for participating! Press any key to submit your data",
         };
 
+        var permission = {
+            type: "html-keyboard-response",
+            stimulus: "Your browser will ask you for permission to use the microphone and webcam. Please accept and press any key to continue afterwards.",
+            extensions: [
+                    {
+                        type: 'webcam-recorder', 
+                        params: {
+                            videoName: "permission"
+                        }
+                    }
+            ],
+        };
+
         var init_camera_trial = {
             type: 'webgazer-init-camera',
-            instructions: `<p>(These text needs to change) Position your head so that the webcam has a good view of your eyes.</p>
+            instructions: `<p>(All these instructional texts needs to change) Position your head so that the webcam has a good view of your eyes.</p>
             <p>Center your face in the box and look directly towards the camera.</p>
             <p>It is important that you try and keep your head reasonably still throughout the experiment, so please take a moment to adjust your setup to be comfortable.</p>
             <p>When your face is centered in the box and the box is green, you can click to continue.</p>`,
@@ -325,7 +338,6 @@
             repetitions: 1
         }
 
-        
         var startFullscreen = {
             type: 'fullscreen',
             fullscreen_mode: true
@@ -339,6 +351,7 @@
         var timeline = [
             preload,
             welcome,
+            permission,
             startFullscreen, 
             init_camera_trial, 
             calibration1_trial, 
