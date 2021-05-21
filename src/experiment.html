@@ -78,8 +78,8 @@
         }
 
         var familiarizationOrders = {
-            A: [videos.FAM_LR, videos.FAM_RR, videos.FAM_LL, videos.FAM_RR],
-            B: [videos.FAM_RR, videos.FAM_LL, videos.FAM_LR, videos.FAM_RR]
+            A: [videos.FAM_LR, videos.FAM_RR, videos.FAM_LL, videos.FAM_RL],
+            B: [videos.FAM_RL, videos.FAM_LL, videos.FAM_LR, videos.FAM_RR]
         }
 
         var trialOrders = {
@@ -280,9 +280,10 @@
                                 {
                                     name: "blue_rectangle_bottom_left",
                                     type: "rect",
+                                    stimulusAspectRatio: 4/3,
                                     rposx: 0,
                                     rposy: 0.55,
-                                    rwidth: 0.4,
+                                    rwidth: 0.43,
                                     rheight: 0.45,
                                     startat: null,
                                     stopat: null,
@@ -291,13 +292,38 @@
                                 {
                                     name: "blue_rectangle_bottom_right",
                                     type: "rect",
-                                    rposx: 0.6,
+                                    stimulusAspectRatio: 4/3,
+                                    rposx: 0.57,
                                     rposy: 0.55,
-                                    rwidth: 0.4,
+                                    rwidth: 0.43,
                                     rheight: 0.45,
                                     startat: null,
                                     stopat: null,
                                     debugColor: "blue",
+                                },
+                                {
+                                    name: "red_rectangle_pipe_left",
+                                    type: "rect",
+                                    stimulusAspectRatio: 4/3,
+                                    rposx: 0.20,
+                                    rposy: 0.60,
+                                    rwidth: 0.17,
+                                    rheight: 0.20,
+                                    startat: null,
+                                    stopat: null,
+                                    debugColor: "red",
+                                },
+                                {
+                                    name: "red_rectangle_pipe_right",
+                                    type: "rect",
+                                    stimulusAspectRatio: 4/3,
+                                    rposx: 0.63,
+                                    rposy: 0.60,
+                                    rwidth: 0.17,
+                                    rheight: 0.20,
+                                    startat: null,
+                                    stopat: null,
+                                    debugColor: "red",
                                 },
                             ],
                             

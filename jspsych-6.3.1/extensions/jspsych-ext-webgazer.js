@@ -9,11 +9,27 @@ jsPsych.extensions['webgazer'] = (function () {
   var state = {};
 
   var scaleToScreen= function(aoi){
-    aoi.posx = aoi.rposx*window.innerWidth;
-    aoi.posy = aoi.rposy*window.innerHeight;
 
-    aoi.width = aoi.rwidth*window.innerWidth;
-    aoi.height = aoi.rheight*window.innerHeight;
+    var browserAspectRatio = window.innerWidth/window.innerHeight;
+
+    var scaleFactor = aoi.stimulusAspectRatio/browserAspectRatio;
+    
+    var scalex = 1;
+    var scaley = 1;
+    if(scaleFactor <= 1){ // stimulus has bars on the sides
+      scalex = scaleFactor;
+    }else{ // stimulus has bars on top and bottom
+      scaley = 1/scaleFactor;
+    }
+
+    var offsetx = (window.innerWidth*(1-scalex))/2;
+    var offsety = (window.innerHeight*(1-scaley))/2;;
+
+    aoi.posx = (aoi.rposx*window.innerWidth)*scalex+offsetx;
+    aoi.posy = (aoi.rposy*window.innerHeight)*scaley+offsety;
+
+    aoi.width = aoi.rwidth*window.innerWidth*scalex;
+    aoi.height = aoi.rheight*window.innerHeight*scaley;
 
   }
 

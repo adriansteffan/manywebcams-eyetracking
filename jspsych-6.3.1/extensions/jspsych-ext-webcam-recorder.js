@@ -61,7 +61,10 @@ jsPsych.extensions['webcam-recorder'] = (function () {
     extension.on_load = function(params){}
   
     extension.on_finish = function(params){
-      state.recorder.stop();
+      if(state.recorder){
+        state.recorder.stop();
+      }
+      
       return {}
     }
     
