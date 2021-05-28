@@ -185,11 +185,11 @@
             ],
         }
 
-        var calibration1_trial = {
+        var calibration_trial = {
             type: 'webgazer-calibrate',
-            calibration_points: [[12,50], [50,50], [88,50], [50,12], [50,88], ],//[25,50], [50,75], [75,50], [50,25]],
+            calibration_points: [[12,50], [50,50], [88,50], [50,12], [50,88], [25,50], [50,75], [75,50]],
             calibration_mode: 'view',
-            time_per_point: 1600,
+            time_per_point: 1900,
             extensions: [
                     {
                         type: 'webcam-recorder', 
@@ -207,16 +207,35 @@
             }
         }
 
-        var validation_trial = { 
+        var validation_trial1 = { 
             type: 'webgazer-validate',
-            validation_points: [[-200,200], [200,200],[-200,-200],[200,-200]],
+            validation_points: [[-250,250], [250,250],[-250,-250],[250,-250]],
             validation_point_coordinates: 'center-offset-pixels',
-            roi_radius: 130,
+            roi_radius: 160,
             extensions: [
                     {
                         type: 'webcam-recorder', 
                         params: {
-                            videoName: "validation"
+                            videoName: "validationAfterCal"
+                        }
+                    },
+                    {
+                        type: 'background-audio', 
+                        params: {}
+                    }
+            ],
+        }
+
+        var validation_trial2 = { 
+            type: 'webgazer-validate',
+            validation_points: [[-250,250], [250,250],[-250,-250],[250,-250]],
+            validation_point_coordinates: 'center-offset-pixels',
+            roi_radius: 160,
+            extensions: [
+                    {
+                        type: 'webcam-recorder', 
+                        params: {
+                            videoName: "validationEnd"
                         }
                     },
                     {
@@ -380,11 +399,11 @@
             permission,
             startFullscreen, 
             init_camera_trial, 
-            calibration1_trial, 
-            //validation_trial,
+            calibration_trial, 
+            validation_trial1,
             fam_videos,
-            //calibration2_trial, 
-            test_videos, 
+            test_videos,
+            validation_trial2, 
             stopFullscreen, 
             end
         ];
