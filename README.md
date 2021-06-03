@@ -154,7 +154,7 @@ The data that was uploaded by the participants browsers can be found in `prod/da
 
 ## Authors
 
-- **Adrian Steffan** [adriansteffan](https://github.com/adriansteffan)
+- **Adrian Steffan** [adriansteffan](https://github.com/adriansteffan) [website](https://adriansteffan.com/)
 <!-- - **Tobias Schuwerk** [tobiasschuwerk](https://github.com/tobiasschuwerk) -->
 
 
