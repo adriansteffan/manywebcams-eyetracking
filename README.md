@@ -7,6 +7,8 @@ Due to the restrictions of the pandemic, conducting in-lab studies using convent
 
 (Todo: Link to relevant article, better description of trials presented, better description of what to do if someone wants to replicate this in their lab)
 
+<img src="demo.gif" width="400" >
+
 ## Table of Contents
 
 * [Installation](#Prerequisites)
