@@ -151,7 +151,7 @@ To visualize the eye tracking data of each participant and facilitate the pre-sc
 python main.py
 ```
 
-will create an `output` folder inext to the script, with seperate folders for each participants. In there you can find video files that overlay the eyetracking results over the stimulus videos and add the synchronized webcam video for easier checking.
+will create an `output` folder next to the script, with seperate folders for each participant. In there you can find video files that overlay the eyetracking results over the stimulus videos and add the synchronized webcam video for pre screening or manual encoding.
 
 ## Built With
 
