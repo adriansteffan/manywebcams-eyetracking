@@ -1,2 +1,5 @@
 data/
 local-server/webroot/
+data-processing/venv/
+data-processing/output/
+data-processing/.idea/
