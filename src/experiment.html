@@ -27,6 +27,8 @@
 
         <link href="jspsych-6.3.1/css/jspsych.css" rel="stylesheet" type="text/css">
         <link href="patch.css" rel="stylesheet" type="text/css">
+
+        <meta charset="utf-8"/>
     </head>
     <body></body>
     <script>        
@@ -147,17 +149,16 @@
 
         var welcome = {
             type: "html-keyboard-response",
-            stimulus: "TODO: Informed Consent, Instructions. Press any key to continue",
-        };
-
-        var end = {
-            type: "html-keyboard-response",
-            stimulus: "Thanks for participating! Press any key to submit your data",
+            stimulus: `<meta charset="utf-8"/><p>Willkommen zu unserer Studie! Zur Erinnerung: Ab der nächsten Seite wird ihre Webcam mit der Aufnahme beginnen. </p>
+            <p>Wenn sie bereit sind, mit der Einführung zu beginnen, drücken sie eine beliebige Taste auf ihrer Tastatur.</p>`,
         };
 
         var permission = {
             type: "html-keyboard-response",
-            stimulus: "Your browser will ask you for permission to use the microphone and webcam. Please accept and press any key to continue afterwards.",
+            stimulus: `<p>Ihr Browser fragt sie nun, ob sie die Nutzung der Webcam und des Mikrofon erlauben möchten.</p>
+            <p>Drücken sie bitte auf "Akzeptieren", da beide für die Studie benötigt werden.</p>
+            <p>Keine Angst: Diese Berechtigung bezieht sich nur auf die Dauer dieser Studie, andere Seiten erhalten keine zusätzlichen Berechtigungen.</p>
+            <p>Bitte akzeptieren sie dies und drücken dann eine beliebige Taste auf ihrer Tastatur, um fortzufahren.</p>`,
             extensions: [
                     {
                         type: 'webcam-recorder', 
@@ -168,12 +169,20 @@
             ],
         };
 
+        var startFullscreen = {
+            type: 'fullscreen',
+            fullscreen_mode: true,
+            message: `<p>Drücken sie bitte auf den "Vollbild" Knopf, um die Software in den Vollbildmodus zu schalten.</p>
+            <p>Die Software wird anschließend die Webcam-Verarbeitung vorbereiten, dies kann einige Sekunden dauern.</p>  `,
+            button_label: "Vollbild",
+        }
+
         var init_camera_trial = {
             type: 'webgazer-init-camera',
-            instructions: `<p>(All these instructional texts needs to change) Position your head so that the webcam has a good view of your eyes.</p>
-            <p>Center your face in the box and look directly towards the camera.</p>
-            <p>It is important that you try and keep your head reasonably still throughout the experiment, so please take a moment to adjust your setup to be comfortable.</p>
-            <p>When your face is centered in the box and the box is green, you can click to continue.</p>`,
+            instructions: `<p>Positionieren sie bitte den Kopf ihres Kindes so, dass die Webcam die Augen gut sehen kann.</p>
+            <p>Den Kopf bitte nun so positionieren, dass er auf dem Video mittig innerhalb des Vierecks zu sehen ist.</p>
+            <p>Für das Experiment ist es wichtig, den Kopf möglichst ruhig zu halten, vergewissern sie sich also, dass ihr Kind eine bequeme Sitzposition hat.</p>
+            <p>Wenn das Gesicht zentriert ist und die Box grün aufleuchtet, können sie auf den "Start" Button drücken, um mit der Wiedergabe der Videos zu beginnen.</p>`,
             button_text:"Start",
             extensions: [
                     {
@@ -185,9 +194,40 @@
             ],
         }
 
+        var end = {
+            type: "html-keyboard-response",
+            stimulus: `<p>Vielen Dank für ihre Teilnahme! Damit die Software genug Zeit hat, 
+            alle Daten an uns zu schicken, bitten wir sie, den leeren Tab für etwa 3 Minuten geöffnet zu lassen.</p>
+            <p>Das Webcam Symbol könnte weiterhin aufleuten, es werden jedoch keine weiteren Aufnahmen erstellt.</p>
+            <p>Drücken sie also eine beliebige Taste und warten sie anschließend 3 Minuten, bevor sie den Tab wechseln oder den Browser schließen.</p>
+            <p>Wenn vorher abgesprochen, können sie bereits in das Zoom-Meeting zurückkehren, insofern sie Zoom nicht über den Browser nutzen. Vielen Dank für ihre Geduld!</p> `,
+        };
+
         var calibration_trial = {
             type: 'webgazer-calibrate',
             calibration_points: [[12,50], [50,50], [88,50], [50,12], [50,88], [25,50], [50,75], [75,50]],
+            calibration_mode: 'view',
+            time_per_point: 1900,
+            extensions: [
+                    {
+                        type: 'webcam-recorder', 
+                        params: {
+                            videoName: "calibration"
+                        }
+                    },
+                    {
+                        type: 'background-audio', 
+                        params: {}
+                    }
+            ],
+            data: {
+                task: 'webgazer-calibrate',
+            }
+        }
+
+        var calibration_trial2 = {
+            type: 'webgazer-calibrate',
+            calibration_points: [[12,50], [50,50], [88,50], [50,12], [50,88]],
             calibration_mode: 'view',
             time_per_point: 1900,
             extensions: [
@@ -383,14 +423,9 @@
             repetitions: 1
         }
 
-        var startFullscreen = {
-            type: 'fullscreen',
-            fullscreen_mode: true
-        }
-
         var stopFullscreen = {
             type: 'fullscreen',
-            fullscreen_mode: false
+            fullscreen_mode: false 
         }
 
         var timeline = [
@@ -402,6 +437,7 @@
             calibration_trial, 
             validation_trial1,
             fam_videos,
+            calibration_trial2,
             test_videos,
             validation_trial2, 
             stopFullscreen, 
