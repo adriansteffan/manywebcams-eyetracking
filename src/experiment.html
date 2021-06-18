@@ -341,9 +341,9 @@
                                     type: "rect",
                                     stimulusAspectRatio: 4/3,
                                     rposx: 0,
-                                    rposy: 0.55,
+                                    rposy: 0.34,
                                     rwidth: 0.43,
-                                    rheight: 0.45,
+                                    rheight: 0.66,
                                     startat: null,
                                     stopat: null,
                                     debugColor: "blue",
@@ -353,9 +353,9 @@
                                     type: "rect",
                                     stimulusAspectRatio: 4/3,
                                     rposx: 0.57,
-                                    rposy: 0.55,
+                                    rposy: 0.34,
                                     rwidth: 0.43,
-                                    rheight: 0.45,
+                                    rheight: 0.66,
                                     startat: null,
                                     stopat: null,
                                     debugColor: "blue",
@@ -428,6 +428,16 @@
             fullscreen_mode: false 
         }
 
+        var thank_you_video = {
+            type: "video-keyboard-response",
+            stimulus: ["media/video/thanks.mp4"],
+            autoplay: true,
+            controls: false,
+            height: () => window.innerHeight,
+            trial_ends_after_video: true,
+            choices: jsPsych.NO_KEYS,
+        }
+
         var timeline = [
             preload,
             welcome,
@@ -439,7 +449,8 @@
             fam_videos,
             calibration_trial2,
             test_videos,
-            validation_trial2, 
+            validation_trial2,
+            thank_you_video,
             stopFullscreen, 
             end
         ];

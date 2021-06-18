@@ -126,8 +126,8 @@ for filename in files:
         continue
     try:
         filename_split = filename.split("_")
-        participant = "_".join(filename_split[:2])
-        trial = ".".join("_".join(filename_split[2:]).split(".")[:-1])
+        participant = "_".join(filename_split[:3])
+        trial = ".".join("_".join(filename_split[3:]).split(".")[:-1])
     except:
         continue
     participants.add(participant)
@@ -158,7 +158,7 @@ for p in participants:
 
         video_path = data_directory + "/" + p + "_" + v + ".webm"
         output_path = "."
-        #tag_video(video_path, filtered[0], v, p)
+        tag_video(video_path, filtered[0], v, p)
 
         # calulate mean and sd for sampling rate
         datapoints = filtered[0]['webgazer_data']
