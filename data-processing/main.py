@@ -6,6 +6,8 @@ from os import listdir
 from os.path import isfile, join
 import subprocess
 
+import pandas as pd
+
 import statistics
 
 # information is not present in the data output, fix this at some point in time
@@ -103,9 +105,6 @@ def tag_video(path, json_data, media_name, participant_name):
                                      curr_gaze_point['y']
                                      )
 
-        #print("gaze x: " + str(curr_gaze_point['x']) + ",gaze y: " + str(curr_gaze_point['y']))
-        #print("x: " + str(x) + ",y: " + str(y))
-
         if x is not None and y is not None:
             cv2.circle(frame, (x, y), radius=10, color=(255, 0, 0), thickness=-1)
 
@@ -137,7 +136,7 @@ videos = [t for t in trials if "_" in t]
 print(videos)
 print(participants)
 
-
+df_dict_list = []
 for p in participants:
 
     if not os.path.exists(output_directory+"/"+p):
@@ -147,6 +146,47 @@ for p in participants:
     with open(json_path) as f:
         data = json.load(f)
     data = [x for x in data if 'task' in x and x['task'] == 'video']
+
+    # process data for participants
+
+    # citical point in time
+    time_of_interest_0 = 20000
+    interval_len_of_interest = 4000
+
+    df_dict = dict()
+    df_dict['subid'] = p
+    df_dict['age_group'] = "kids" if "Child" in p else "adults"
+    df_dict['age_in_days'] = 0
+    df_dict['error_subj'] = False
+
+    for index, trial in enumerate(data):
+        df_dict['trial_num'] = index+1
+        df_dict['stimulus'] = trial['stimulus'][0].split("/")[-1].split(".")[0]
+        df_dict['condition'] = "fam" if "FAM" in df_dict['stimulus'] else ("knowledge" if "KNOW" in df_dict['stimulus'] else "ignorance")
+
+        if df_dict['stimulus'][-1] == "R":
+            target_aoi = "blue_rectangle_bottom_right"
+            distractor_aoi = "blue_rectangle_bottom_left"
+
+        else:
+            target_aoi = "blue_rectangle_bottom_leftt"
+            distractor_aoi = "blue_rectangle_bottom_right"
+
+        datapoints = trial['webgazer_data']
+        sampling_diffs = [datapoints[i + 1]['t'] - datapoints[i]['t'] for i in range(1, len(datapoints) - 1)]
+        sampling_rates = [1000 / diff for diff in sampling_diffs]
+        df_dict['sampling_rate'] = statistics.mean(sampling_rates)
+
+        for datapoint in datapoints:
+            if time_of_interest_0 - interval_len_of_interest > datapoint["t"] or datapoint["t"] > time_of_interest_0:
+                continue
+            df_dict['t (-4000 - 0)'] = datapoint["t"] - time_of_interest_0
+            if "hitAois" not in datapoint:
+                df_dict['aoi'] = "none"
+            else:
+                df_dict['aoi'] = "target" if target_aoi in datapoint["hitAois"] \
+                    else ("distractor" if distractor_aoi in datapoint["hitAois"] else "none")
+            df_dict_list.append(dict(df_dict))
 
     mean_sum = 0
     sd_sum = 0
@@ -158,17 +198,8 @@ for p in participants:
 
         video_path = data_directory + "/" + p + "_" + v + ".webm"
         output_path = "."
-        tag_video(video_path, filtered[0], v, p)
-
-        # calulate mean and sd for sampling rate
-        datapoints = filtered[0]['webgazer_data']
-        sampling_diffs = [datapoints[i+1]['t']-datapoints[i]['t'] for i in range(1, len(datapoints)-1)]
-        sampling_rates = [1000/diff for diff in sampling_diffs]
-        mean_sum += statistics.mean(sampling_rates)
-        sd_sum += statistics.stdev(sampling_rates)
-
-    #print(p)
-    #print("mean sampling rate: " + str(mean_sum/6))
-    #print("sd sampling rate: " + str(sd_sum /6))
+        #tag_video(video_path, filtered[0], v, p)
 
 
+df = pd.DataFrame(df_dict_list)
+df.to_csv(output_directory+"/transformed_data.csv", encoding='utf-8')
