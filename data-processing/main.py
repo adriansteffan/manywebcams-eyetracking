@@ -1,6 +1,7 @@
 import cv2
 import json
 
+import shutil
 import os
 from os import listdir
 from os.path import isfile, join
@@ -13,50 +14,68 @@ import statistics
 # information is not present in the data output, fix this at some point in time
 STIMULUS_ASPECT_RATIO = 4.0/3.0
 
+# sampling rate parameters in Hz
+MIN_SAMPLING_RATE = 7
+RESAMPLE_SAMPLING_RATE = 15
+
 data_directory = "../prod_mb2-webcam-eyetracking/data"
 media_directory = "../media/video"
 output_directory = "./output"
+
+exclusion_csv_path = "./excluded_trials.csv"
 
 if not os.path.exists(output_directory):
     os.makedirs(output_directory)
 
 
 def translate_coordinates(video_aspect_ratio, win_height, win_width, vid_height, vid_width, winX, winY):
+    """translate the output coordinates of the eye-tracker onto the stimulus video"""
     if win_width/win_height > video_aspect_ratio:  # full height video
         vid_on_screen_width = win_height*video_aspect_ratio
+        outside = False
 
         if winX < (win_width - vid_on_screen_width)/2 or winX > ((win_width - vid_on_screen_width)/2 + vid_on_screen_width):
-            return None, None
+            outside = True
         # scale x
         vidX = ((winX - (win_width - vid_on_screen_width)/2) / vid_on_screen_width) * vid_width
         # scale y
         vidY = (winY/win_height)*vid_height
-        return int(vidX), int(vidY)
+        return int(vidX), int(vidY), outside
     else:  # full width video
         # TODO cutoff for other aspect ratios
         vidX = (winX / win_width) * vid_width
-        return None, None
+        return None, None, True
 
 
 def tag_video(path, json_data, media_name, participant_name):
 
-    """ combine media and webcam video """
+    """ add the webcam footage as an overlay to the stimulus media file (if footage exists),
+        add a frame counter, and visualize the gaze location from the eyetracking data
+    """
 
     pre1_path = output_directory+"/"+participant_name+"/pre1_" + media_name + ".mp4"
     pre2_path = output_directory+"/"+participant_name+"/pre2_" + media_name + ".mp4"
     final_path = output_directory +"/"+ participant_name +"/tagged_"+ media_name + ".mp4"
 
     if True:
-        p1 = subprocess.Popen(['ffmpeg',
-                         '-y',
-                         '-i',
-                         media_directory+"/"+media_name+".mp4",
-                         "-vf",
-                         "movie="+data_directory+"/"+participant_name+"_"+media_name+".webm, scale=350: -1 [inner]; [in][inner] overlay =10: 10 [out]",
-                         pre1_path
-                         ])
+        # combine media and webcam video
 
-        p1.wait()
+        if os.path.isfile(data_directory+"/"+participant_name+"_"+media_name+".webm"):
+            p1 = subprocess.Popen(['ffmpeg',
+                             '-y',
+                             '-i',
+                             media_directory+"/"+media_name+".mp4",
+                             "-vf",
+                             "movie="+data_directory+"/"+participant_name+"_"+media_name+".webm, scale=350: -1 [inner]; [in][inner] overlay =10: 10 [out]",
+                             pre1_path
+                             ])
+
+            p1.wait()
+
+        else:
+            shutil.copy(media_directory+"/"+media_name+".mp4", pre1_path)
+
+        # add frame counter to video
         p2 = subprocess.Popen(['ffmpeg',
                          '-y',
                          '-i',
@@ -73,7 +92,7 @@ def tag_video(path, json_data, media_name, participant_name):
                          ])
         p2.wait()
 
-    """ tag the video with eye tracking data """
+    # tag the video with eye tracking data
 
     win_width = json_data['windowWidth']
     win_height = json_data['windowHeight']
@@ -84,7 +103,7 @@ def tag_video(path, json_data, media_name, participant_name):
     fps = video.get(cv2.CAP_PROP_FPS)
     vid_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
     vid_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
-    size = (vid_height, vid_width)
+
 
     video_writer = cv2.VideoWriter(final_path, cv2.VideoWriter_fourcc('m','p','4','v'), fps, (vid_width, vid_height), True)
     success, frame = video.read()
@@ -96,7 +115,7 @@ def tag_video(path, json_data, media_name, participant_name):
             gaze_point_index += 1
 
         curr_gaze_point = gaze_points[gaze_point_index]
-        x, y = translate_coordinates(STIMULUS_ASPECT_RATIO,
+        x, y, outside = translate_coordinates(STIMULUS_ASPECT_RATIO,
                                      win_height,
                                      win_width,
                                      vid_height,
@@ -105,15 +124,18 @@ def tag_video(path, json_data, media_name, participant_name):
                                      curr_gaze_point['y']
                                      )
 
-        if x is not None and y is not None:
+        if not outside:
             cv2.circle(frame, (x, y), radius=10, color=(255, 0, 0), thickness=-1)
 
-        cv2.imshow(media_name, frame)
+        #cv2.imshow(media_name, frame)
         cv2.waitKey(int(1000 / int(fps)))
         video_writer.write(frame)
         success, frame = video.read()
         index += 1
     video.release()
+
+    os.remove(pre1_path)
+    os.remove(pre2_path)
 
 
 files = [f for f in listdir(data_directory) if isfile(join(data_directory, f))]
@@ -121,22 +143,86 @@ participants = set()
 trials = set()
 
 for filename in files:
-    if filename.startswith(".") or filename.endswith(".json"):
+    if filename.startswith("."):
         continue
+
+    filename_split = filename.split("_")
+    participant = "_".join(filename_split[:3])
+
+    if filename.endswith(".json"):
+        participants.add(participant)
     try:
-        filename_split = filename.split("_")
-        participant = "_".join(filename_split[:3])
         trial = ".".join("_".join(filename_split[3:]).split(".")[:-1])
     except:
         continue
-    participants.add(participant)
+
     trials.add(trial)
 
 videos = [t for t in trials if "_" in t]
-print(videos)
-print(participants)
+
+target_aoi_location = {
+    "FAM_LL": "left",
+    "FAM_LR": "right",
+    "FAM_RL": "left",
+    "FAM_RR": "right",
+    "KNOW_LL": "right",
+    "KNOW_LR": "left",
+    "KNOW_RL": "right",
+    "KNOW_RR": "left",
+    "IG_LL": "right",
+    "IG_LR": "left",
+    "IG_RL": "right",
+    "IG_RR": "left"
+}
+
+time_of_interest_dict = {
+    "FAM_LL": 25913,
+    "FAM_LR": 25902,
+    "FAM_RL": 25918,
+    "FAM_RR": 25896,
+    "KNOW_LL": 31205,
+    "KNOW_LR": 31244,
+    "KNOW_RL": 31265,
+    "KNOW_RR": 31209,
+    "IG_LL": 29776,
+    "IG_LR": 29797,
+    "IG_RL": 29791,
+    "IG_RR": 29830,
+}
+
+interval_len_of_interest = 8000
+
+heatmap_times_for_screenshot = {
+    "FAM_LL": 25913,
+    "FAM_LR": 25902,
+    "FAM_RL": 25918,
+    "FAM_RR": 25896,
+    "KNOW_LL": 31205,
+    "KNOW_LR": 31244,
+    "KNOW_RL": 31265,
+    "KNOW_RR": 31209,
+    "IG_LL": 29776,
+    "IG_LR": 29797,
+    "IG_RL": 29791,
+    "IG_RR": 29830,
+}
+
+exclusion_check_colnames = ["FAM1_OK", "FAM2_OK", "FAM3_OK", "FAM4_OK", "TEST1_OK", "TEST2_OK"]
+exclusion_df = pd.read_csv(exclusion_csv_path)
+exclusion_dict = dict()
+
+for p_id in exclusion_df['id']:
+    if p_id not in exclusion_dict:
+        exclusion_dict[p_id] = []
+
+for trial_index, colname in enumerate(exclusion_check_colnames):
+    for index, value in enumerate(exclusion_df[colname]):
+        if not isinstance(value, str) or value.lower() != "yes":
+            exclusion_dict[exclusion_df['id'][index]].append(trial_index+1)
 
 df_dict_list = []
+df_dict_resampled_list = []
+
 for p in participants:
 
     if not os.path.exists(output_directory+"/"+p):
@@ -149,38 +235,73 @@ for p in participants:
 
     # process data for participants
 
-    # citical point in time
-    time_of_interest_0 = 20000
-    interval_len_of_interest = 4000
-
     df_dict = dict()
     df_dict['subid'] = p
     df_dict['age_group'] = "kids" if "Child" in p else "adults"
     df_dict['age_in_days'] = 0
     df_dict['error_subj'] = False
 
+    df_dict_resampled = dict()
+    df_dict_resampled['subid'] = p
+
     for index, trial in enumerate(data):
-        df_dict['trial_num'] = index+1
-        df_dict['stimulus'] = trial['stimulus'][0].split("/")[-1].split(".")[0]
-        df_dict['condition'] = "fam" if "FAM" in df_dict['stimulus'] else ("knowledge" if "KNOW" in df_dict['stimulus'] else "ignorance")
 
-        if df_dict['stimulus'][-1] == "R":
-            target_aoi = "blue_rectangle_bottom_right"
-            distractor_aoi = "blue_rectangle_bottom_left"
+        df_dict['trial_num'] = index + 1
+        # Exclusion criteria
+        # Exclusion criterion 1: tracking malfunction picked by human rater
+        if p in exclusion_dict and df_dict['trial_num'] in exclusion_dict[p]:
+            continue
 
-        else:
-            target_aoi = "blue_rectangle_bottom_leftt"
-            distractor_aoi = "blue_rectangle_bottom_right"
-
+        # Exclusion criterion 2: low sampling rate
         datapoints = trial['webgazer_data']
         sampling_diffs = [datapoints[i + 1]['t'] - datapoints[i]['t'] for i in range(1, len(datapoints) - 1)]
         sampling_rates = [1000 / diff for diff in sampling_diffs]
         df_dict['sampling_rate'] = statistics.mean(sampling_rates)
+        if df_dict['sampling_rate'] < MIN_SAMPLING_RATE:
+            continue
 
+        df_dict['stimulus'] = trial['stimulus'][0].split("/")[-1].split(".")[0]
+        df_dict_resampled['stimulus'] = df_dict['stimulus']
+
+        df_dict['condition'] = "fam" if "FAM" in df_dict['stimulus'] else ("knowledge" if "KNOW" in df_dict['stimulus'] else "ignorance")
+
+        if target_aoi_location[df_dict['stimulus']] == "right":
+            target_aoi = "blue_rectangle_bottom_right"
+            distractor_aoi = "blue_rectangle_bottom_left"
+
+        else:
+            target_aoi = "blue_rectangle_bottom_left"
+            distractor_aoi = "blue_rectangle_bottom_right"
+
+        # Resampled data - only important for visualizations
+        last_time_point = datapoints[-1]["t"]
+        timestep = 1000/RESAMPLE_SAMPLING_RATE
+        t = 0
+        last_index = 0
+        while t <= last_time_point:
+
+            if last_index + 1 == len(datapoints):
+                break
+
+            while t >= datapoints[last_index + 1]["t"] and t <= last_time_point:
+                last_index += 1
+
+            df_dict_resampled['x'] = datapoints[last_index]['x']
+            df_dict_resampled['y'] = datapoints[last_index]['y']
+            df_dict_resampled['t'] = int(t)
+            df_dict_resampled['windowWidth'] = trial['windowWidth']
+            df_dict_resampled['windowHeight'] = trial['windowHeight']
+            df_dict_resampled_list.append(dict(df_dict_resampled))
+
+            t += timestep
+
+        # Non-resampled data - important for analysis of the critical time period
         for datapoint in datapoints:
-            if time_of_interest_0 - interval_len_of_interest > datapoint["t"] or datapoint["t"] > time_of_interest_0:
+
+            if time_of_interest_dict[df_dict['stimulus']] > datapoint["t"] or \
+                    datapoint["t"] > time_of_interest_dict[df_dict['stimulus']] + interval_len_of_interest:
                 continue
-            df_dict['t (-4000 - 0)'] = datapoint["t"] - time_of_interest_0
+            df_dict['t ( 0 - 8000)'] = datapoint["t"] - time_of_interest_dict[df_dict['stimulus']]
             if "hitAois" not in datapoint:
                 df_dict['aoi'] = "none"
             else:
@@ -198,8 +319,172 @@ for p in participants:
 
         video_path = data_directory + "/" + p + "_" + v + ".webm"
         output_path = "."
-        #tag_video(video_path, filtered[0], v, p)
+        tag_video(video_path, filtered[0], v, p)
 
 
 df = pd.DataFrame(df_dict_list)
 df.to_csv(output_directory+"/transformed_data.csv", encoding='utf-8')
+
+df_resampled = pd.DataFrame(df_dict_resampled_list)
+df_resampled.to_csv(output_directory+"/transformed_data_resampled.csv", encoding='utf-8')
+
+agg_df = df[df['t ( 0 - 8000)'] <= 4000].groupby(['subid', 'condition', 'aoi']).size()
+relative_df = agg_df.groupby(['subid', 'condition']).apply(lambda x: x / float(x.sum())).reset_index(name='freq')
+
+# Ugly fix for missing aois when there wasn't a single gaze in that area -> append 0% values
+aois = ['distractor', 'target', 'none']
+conditions = ['fam', 'knowledge', 'ignorance']
+participants = relative_df['subid'].unique()
+
+df_fix_dict = dict()
+df_fix_dict_list = []
+
+for p in participants:
+    df_fix_dict['subid'] = p
+    for c in conditions:
+        df_fix_dict['condition'] = c
+        for a in aois:
+            df_fix_dict['aoi'] = a
+            if relative_df[(relative_df.subid == p) & (relative_df.condition == c) & (relative_df.aoi == a)].empty:
+                df_fix_dict['freq'] = 0.0
+                df_fix_dict_list.append(dict(df_fix_dict))
+
+fix_df = pd.DataFrame(df_fix_dict_list)
+relative_df.append(fix_df).to_csv(output_directory+"/relative_data.csv", encoding='utf-8')
+
+
+def create_beeswarm(media_name, resampled_df, name_filter, show_sd_circle):
+
+    """ create a beeswarm plot for a stimulus given a df with the resampled gaze data"""
+
+    pre_path = output_directory+"/"+media_name+"_beeswarm_tobedeleted_" + name_filter + ".mp4"
+    final_path = output_directory + "/" + media_name + "_beeswarm_" + ("sd_" if show_sd_circle else "")+ name_filter + ".mp4"
+
+    # add frame counter to video
+    p1 = subprocess.Popen(['ffmpeg',
+                     '-y',
+                     '-i',
+                     media_directory+"/"+media_name+".mp4",
+                     '-vf',
+                     "drawtext=fontfile=Arial.ttf: text='%{frame_num} / %{pts}': start_number=1: x=(w-tw)/2: y=h-lh: fontcolor=black: fontsize=(h/20): box=1: boxcolor=white: boxborderw=5",
+                     "-c:a",
+                     "copy",
+                     "-c:v",
+                     "libx264",
+                     "-crf",
+                     "23",
+                     pre_path,
+                     ])
+    p1.wait()
+
+    #filter dataframe by name_filter and trial
+    clean_df = resampled_df[(resampled_df['stimulus'] == media_name) & (resampled_df['subid'].str.contains(name_filter))]
+
+    # tag the video with eye tracking data
+    video = cv2.VideoCapture(pre_path)
+    fps = video.get(cv2.CAP_PROP_FPS)
+    vid_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    vid_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+
+    video_writer = cv2.VideoWriter(final_path, cv2.VideoWriter_fourcc('m','p','4','v'), fps, (vid_width, vid_height), True)
+    success, frame = video.read()
+    index = 1
+    timestep = 1000 / RESAMPLE_SAMPLING_RATE
+    t = 0
+
+    while success:
+
+        relevant_rows = clean_df[clean_df['t'] == int(t)]
+
+        if t <= (index/fps)*1000:
+            t += timestep
+
+        x_values = []
+        y_values = []
+        for i, row in relevant_rows.iterrows():
+
+            x, y, outside = translate_coordinates(STIMULUS_ASPECT_RATIO,
+                                         row['windowHeight'],
+                                         row['windowWidth'],
+                                         vid_height,
+                                         vid_width,
+                                         row['x'],
+                                         row['y']
+                                         )
+
+            x_values.append(x)
+            y_values.append(y)
+
+            if not outside:
+                cv2.circle(frame, (x, y), radius=10, color=(255, 0, 0), thickness=-1)
+        try:
+            cv2.circle(frame, (int(statistics.mean(x_values)), int(statistics.mean(y_values))), radius=15, color=(0, 0, 255), thickness=-1)
+        except Exception:
+            pass
+
+        if show_sd_circle:
+            cv2.ellipse(frame,
+                        (int(statistics.mean(x_values)), int(statistics.mean(y_values))),
+                        (int(statistics.stdev(x_values)), int(statistics.stdev(y_values))), 0., 0., 360, (255, 255, 255), thickness=3)
+
+        #cv2.imshow(media_name, frame)
+        cv2.waitKey(int(1000 / int(fps)))
+        video_writer.write(frame)
+        success, frame = video.read()
+        index += 1
+
+
+    video.release()
+    os.remove(pre_path)
+
+# create beeswarm plots
+for v in videos:
+    for filter_name in ["Adult", "Child"]:
+        create_beeswarm(v, df_resampled, filter_name, True)
+        create_beeswarm(v, df_resampled, filter_name, False)
+
+"""
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+
+
+def data_coord2view_coord(p, vlen, pmin, pmax):
+    dp = pmax - pmin
+    dv = (p - pmin) / dp * vlen
+    return dv
+
+
+def nearest_neighbours(xs, ys, reso, n_neighbours):
+    im = np.zeros([reso, reso])
+    extent = [np.min(xs), np.max(xs), np.min(ys), np.max(ys)]
+
+    xv = data_coord2view_coord(xs, reso, extent[0], extent[1])
+    yv = data_coord2view_coord(ys, reso, extent[2], extent[3])
+    for x in range(reso):
+        for y in range(reso):
+            xp = (xv - x)
+            yp = (yv - y)
+
+            d = np.sqrt(xp**2 + yp**2)
+
+            im[y][x] = 1 / np.sum(d[np.argpartition(d.ravel(), n_neighbours)[:n_neighbours]])
+
+    return im, extent
+
+
+
+
+resolution = 40
+df_critical = df_resampled[df_resampled['t'] <= 4000]
+
+
+
+for v in videos:
+    im, extent = nearest_neighbours(df_critical[df_critical['stimulus'] == v]['x'].to_numpy(),
+                                    df_critical[df_critical['stimulus'] == v]['y'].to_numpy(),
+                                    resolution, 32)
+
+    plt.imshow(im, origin='lower', extent=extent, cmap=cm.jet)
+    plt.show()
+"""
