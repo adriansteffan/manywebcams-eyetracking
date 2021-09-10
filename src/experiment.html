@@ -151,6 +151,9 @@
             type: "html-keyboard-response",
             stimulus: `<meta charset="utf-8"/><p>Willkommen zu unserer Studie! Zur Erinnerung: Ab der nächsten Seite wird ihre Webcam mit der Aufnahme beginnen. </p>
             <p>Wenn sie bereit sind, mit der Einführung zu beginnen, drücken sie eine beliebige Taste auf ihrer Tastatur.</p>`,
+            data: {
+                userAgent: navigator.userAgent
+            }
         };
 
         var permission = {
@@ -247,43 +250,31 @@
             }
         }
 
-        var validation_trial1 = { 
-            type: 'webgazer-validate',
-            validation_points: [[-250,250], [250,250],[-250,-250],[250,-250]],
-            validation_point_coordinates: 'center-offset-pixels',
-            roi_radius: 160,
-            extensions: [
-                    {
-                        type: 'webcam-recorder', 
-                        params: {
-                            videoName: "validationAfterCal"
+        var createValidationTrial = function(number){
+            return { 
+                type: 'webgazer-validate',
+                validation_points: [[0,0],],
+                validation_point_coordinates: 'center-offset-pixels',
+                roi_radius: 200,
+                validation_duration: 4000,
+                extensions: [
+                        {
+                            type: 'webcam-recorder', 
+                            params: {
+                                videoName: "validation" + number
+                            }
+                        },
+                        {
+                            type: 'background-audio', 
+                            params: {}
                         }
-                    },
-                    {
-                        type: 'background-audio', 
-                        params: {}
-                    }
-            ],
+                ],
+            }
         }
+            
+        
+        
 
-        var validation_trial2 = { 
-            type: 'webgazer-validate',
-            validation_points: [[-250,250], [250,250],[-250,-250],[250,-250]],
-            validation_point_coordinates: 'center-offset-pixels',
-            roi_radius: 160,
-            extensions: [
-                    {
-                        type: 'webcam-recorder', 
-                        params: {
-                            videoName: "validationEnd"
-                        }
-                    },
-                    {
-                        type: 'background-audio', 
-                        params: {}
-                    }
-            ],
-        }
 
         var instructions = {
             type: "html-keyboard-response",
@@ -428,16 +419,6 @@
             fullscreen_mode: false 
         }
 
-        var thank_you_video = {
-            type: "video-keyboard-response",
-            stimulus: ["media/video/thanks.mp4"],
-            autoplay: true,
-            controls: false,
-            height: () => window.innerHeight,
-            trial_ends_after_video: true,
-            choices: jsPsych.NO_KEYS,
-        }
-
         var timeline = [
             preload,
             welcome,
@@ -445,12 +426,13 @@
             startFullscreen, 
             init_camera_trial, 
             calibration_trial, 
-            validation_trial1,
+            createValidationTrial(1),
             fam_videos,
+            createValidationTrial(2),
             calibration_trial2,
+            createValidationTrial(3),
             test_videos,
-            validation_trial2,
-            thank_you_video,
+            createValidationTrial(4),
             stopFullscreen, 
             end
         ];
@@ -460,6 +442,8 @@
             timeline: timeline,
             use_webaudio: false,
             on_finish: function() {
+                
+                
 
                 if(printDataDebug){
                     var jspsychelemnt = document.querySelector(".jspsych-display-element");
