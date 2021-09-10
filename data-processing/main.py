@@ -143,20 +143,18 @@ participants = set()
 trials = set()
 
 for filename in files:
-    if filename.startswith("."):
+    if filename.startswith(".") or filename.endswith(".json"):
         continue
-
-    filename_split = filename.split("_")
-    participant = "_".join(filename_split[:3])
-
-    if filename.endswith(".json"):
-        participants.add(participant)
     try:
+        filename_split = filename.split("_")
+        participant = "_".join(filename_split[:3])
+        participants.add(participant)
         trial = ".".join("_".join(filename_split[3:]).split(".")[:-1])
     except:
         continue
 
     trials.add(trial)
+
 
 videos = [t for t in trials if "_" in t]
 
@@ -220,6 +218,21 @@ for trial_index, colname in enumerate(exclusion_check_colnames):
         if not isinstance(value, str) or value.lower() != "yes":
             exclusion_dict[exclusion_df['id'][index]].append(trial_index+1)
 
+# data about exclusions -> refactor this later!
+merged_exclusion_list_adult = []
+merged_exclusion_list_child = []
+for key, value in exclusion_dict.items():
+    if "Child" in key:
+        merged_exclusion_list_child += value
+    else:
+        merged_exclusion_list_adult += value
+
+from collections import Counter
+print(Counter(merged_exclusion_list_adult))
+print(Counter(merged_exclusion_list_child))
+
+samplingrate_exlusion_trials = []
+
 df_dict_list = []
 df_dict_resampled_list = []
 
@@ -252,16 +265,19 @@ for p in participants:
         if p in exclusion_dict and df_dict['trial_num'] in exclusion_dict[p]:
             continue
 
+        df_dict['stimulus'] = trial['stimulus'][0].split("/")[-1].split(".")[0]
+        df_dict_resampled['stimulus'] = df_dict['stimulus']
+
         # Exclusion criterion 2: low sampling rate
         datapoints = trial['webgazer_data']
         sampling_diffs = [datapoints[i + 1]['t'] - datapoints[i]['t'] for i in range(1, len(datapoints) - 1)]
         sampling_rates = [1000 / diff for diff in sampling_diffs]
         df_dict['sampling_rate'] = statistics.mean(sampling_rates)
         if df_dict['sampling_rate'] < MIN_SAMPLING_RATE:
+            samplingrate_exlusion_trials.append(p + "_" + df_dict['stimulus'])
             continue
 
-        df_dict['stimulus'] = trial['stimulus'][0].split("/")[-1].split(".")[0]
-        df_dict_resampled['stimulus'] = df_dict['stimulus']
+
 
         df_dict['condition'] = "fam" if "FAM" in df_dict['stimulus'] else ("knowledge" if "KNOW" in df_dict['stimulus'] else "ignorance")
 
@@ -319,7 +335,10 @@ for p in participants:
 
         video_path = data_directory + "/" + p + "_" + v + ".webm"
         output_path = "."
-        tag_video(video_path, filtered[0], v, p)
+        #tag_video(video_path, filtered[0], v, p)
+
+
+print(samplingrate_exlusion_trials)
 
 
 df = pd.DataFrame(df_dict_list)
@@ -345,7 +364,8 @@ for p in participants:
         df_fix_dict['condition'] = c
         for a in aois:
             df_fix_dict['aoi'] = a
-            if relative_df[(relative_df.subid == p) & (relative_df.condition == c) & (relative_df.aoi == a)].empty:
+            if not relative_df[(relative_df.subid == p) & (relative_df.condition == c)].empty and \
+                    relative_df[(relative_df.subid == p) & (relative_df.condition == c) & (relative_df.aoi == a)].empty:
                 df_fix_dict['freq'] = 0.0
                 df_fix_dict_list.append(dict(df_fix_dict))
 
@@ -422,10 +442,13 @@ def create_beeswarm(media_name, resampled_df, name_filter, show_sd_circle):
         except Exception:
             pass
 
-        if show_sd_circle:
-            cv2.ellipse(frame,
-                        (int(statistics.mean(x_values)), int(statistics.mean(y_values))),
-                        (int(statistics.stdev(x_values)), int(statistics.stdev(y_values))), 0., 0., 360, (255, 255, 255), thickness=3)
+        try:
+            if show_sd_circle:
+                cv2.ellipse(frame,
+                            (int(statistics.mean(x_values)), int(statistics.mean(y_values))),
+                            (int(statistics.stdev(x_values)), int(statistics.stdev(y_values))), 0., 0., 360, (255, 255, 255), thickness=3)
+        except Exception:
+            pass
 
         #cv2.imshow(media_name, frame)
         cv2.waitKey(int(1000 / int(fps)))
@@ -488,3 +511,5 @@ for v in videos:
     plt.imshow(im, origin='lower', extent=extent, cmap=cm.jet)
     plt.show()
 """
+
+
