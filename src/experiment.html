@@ -15,8 +15,10 @@
         <script src="jspsych-6.3.1/plugins/jspsych-preload.js"></script>
 
         <script src="jspsych-6.3.1/plugins/jspsych-html-keyboard-response.js"></script>
+        <script src="jspsych-6.3.1/plugins/jspsych-html-button-response.js"></script>
         <script src="jspsych-6.3.1/plugins/jspsych-video-keyboard-response.js"></script>
         <script src="jspsych-6.3.1/plugins/jspsych-fullscreen.js"></script>
+        <script src="jspsych-6.3.1/plugins/jspsych-call-function.js"></script>
         <script src="jspsych-6.3.1/plugins/jspsych-webgazer-calibrate.js"></script>
         <script src="jspsych-6.3.1/plugins/jspsych-webgazer-init-camera.js"></script>
         <script src="jspsych-6.3.1/plugins/jspsych-webgazer-validate.js"></script>
@@ -33,21 +35,6 @@
     <body></body>
     <script>        
 
-        // save data locally on the server
-        function saveData(filetype, name, data){
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', 'write_data.php');
-            xhr.setRequestHeader('Content-Type', 'application/json'); 
-            if(filetype==="webm"){
-                var reader = new FileReader();
-                reader.readAsDataURL(data);  
-                reader.onloadend = () => {  
-                    xhr.send(JSON.stringify({filename: name, filedata: reader.result, filetype: filetype}));                
-                }
-            } else{
-                xhr.send(JSON.stringify({filename: name, filedata: data, filetype: filetype}));
-            }
-        }
 
         function createUUID(){
             /*We need a way to identify subjects that did not specify an id in the url
@@ -62,7 +49,6 @@
             })
             return uuid
         }
-
 
         var videos = {  
             FAM_LL: 'media/video/FAM_LL.mp4',
@@ -137,7 +123,32 @@
         var printDataDebug = false || !!(jsPsych.data.urlVariables().print_data);
         var preventDataUpload = false || !!(jsPsych.data.urlVariables().prevent_upload);
         
+        
+        // video name is the stimulus filepath, cleaning that up
+        function nameFromMediaPath(path){
+            return path.toString().split("/").pop().split(".")[0];
+        }
 
+        function downloadData(){
+            var zip = new JSZip();
+            zip.file(subjectString+trialOrder+"_data.json", jsPsych.data.get().json());
+            window.webcamVideoBlobs.forEach(({blob, name}, i) => {
+                zip.file(subjectString+trialOrder+"_"+nameFromMediaPath(name)+".webm", blob);
+            }); 
+
+            zip.generateAsync({type:"blob"})
+            .then(function(content) {
+                var a = document.createElement('a');
+                a.style.display = 'none';
+                document.body.append(a);
+                var url = URL.createObjectURL(content);
+                a.href = url;
+                a.download = "experiment.zip";
+                a.click();
+                URL.revokeObjectURL(url);
+                a.remove();
+            });
+        }
 
         var preload = {
             type: 'preload',
@@ -197,18 +208,10 @@
             ],
         }
 
-        var end = {
-            type: "html-keyboard-response",
-            stimulus: `<p><strong>Bitte den Browser noch nicht schließen!</strong> Damit die Software genug Zeit hat, 
-            alle Daten an uns zu schicken, bitten wir sie, den leeren Tab für etwa 3 Minuten geöffnet zu lassen.</p>
-            <p>Das Webcam Symbol könnte weiterhin aufleuten, es werden jedoch keine weiteren Aufnahmen erstellt.</p>
-            <p><strong>Drücken sie nun also eine beliebige Taste und warten sie anschließend 3 Minuten, bevor sie aus dem (leeren) Tab wechseln oder den Browser schließen.</strong></p>
-            <p>Wenn vorher abgesprochen, können sie bereits in das Zoom-Meeting zurückkehren, insofern sie Zoom nicht über den Browser nutzen. Vielen Dank für ihre Teilnahme!</p> `,
-        };
 
         var calibration_trial = {
             type: 'webgazer-calibrate',
-            calibration_points: [[12,50], [50,50], [88,50], [50,12], [50,88], [25,50], [50,75], [75,50]],
+            calibration_points: [[50,50],],// [50,12], [12,12], [12,50], [12,88], [50,88], [88,88], [88,50], [88,12]],
             calibration_mode: 'view',
             time_per_point: 1900,
             extensions: [
@@ -274,8 +277,6 @@
             
         
         
-
-
         var instructions = {
             type: "html-keyboard-response",
             stimulus: `
@@ -419,22 +420,146 @@
             fullscreen_mode: false 
         }
 
+
+        var startUpload = {
+            type: 'html-button-response',
+            stimulus: `<p>Klicken sie auf den Button unten, um ihre Versuchsdaten abzuschicken. </p>
+            <p>Das Hochladen wird 1-2 Minuten dauern und sie anschließend auf die nächste Seite weiterleiten. Lassen den Browsertab bitte geöffnet, bis sie weitere Anweisungen erhalten.</p>
+            <p>Das Webcam Symbol könnte weiterhin aufleuten, es werden jedoch keine weiteren Aufnahmen erstellt.</p>`,
+            choices: ['Abschicken'],
+        }
+
+        var uploadTrial = {
+            type: 'call-function',
+            async: true,
+            func: function(done){
+                
+                if(preventDataUpload){
+                    done({upload: false});
+                    return;
+                }
+
+                function sendVideoBlobToServer({blob, name}) {
+                    var reader = new FileReader()
+                    
+                    return new Promise(function (resolve, reject) {
+                        var reader = new FileReader();
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('POST', 'write_data.php');
+                        xhr.setRequestHeader('Content-Type', 'application/json'); 
+
+                        xhr.onreadystatechange = function() {
+                            if(xhr.readyState == 4) {
+                                resolve(xhr.status);
+                            }
+                        };
+
+                        reader.onloadend = function (event) {
+                            xhr.send(JSON.stringify({
+                                filename: subjectString+trialOrder+"_"+nameFromMediaPath(name),
+                                filedata: reader.result,
+                                filetype: "webm"
+                            }));
+        
+                        }
+    
+                        reader.readAsDataURL(blob)
+                    })
+                }  
+
+                Promise.all(window.webcamVideoBlobs.map(sendVideoBlobToServer)).then((statusCodes) => {
+                    
+                    // if any video upload failed, exit
+                    if(!statusCodes.every( v => v == 200)){
+                        done({upload: false});
+                        return;
+                    }
+
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', 'write_data.php');
+                    xhr.setRequestHeader('Content-Type', 'application/json'); 
+                    
+                    xhr.onreadystatechange = function() {
+                        if(xhr.readyState == 4) {
+                            if(xhr.status != 200){
+                                //Json upload failed
+                                done({upload: false});
+                                return;
+                            }
+                            //Json upload successful
+                            done({upload: true});   
+                        }
+                    };
+
+                    xhr.send(JSON.stringify({
+                        filename: subjectString+trialOrder+"_data",
+                        filedata: jsPsych.data.get().json(),
+                        filetype: "json"
+                    }));
+                })
+            }
+        }
+
+        var ifUploadSuccessTrial = {
+            type: "html-keyboard-response",
+            stimulus: `<p>Die Daten wurden erfolgreich übermittelt, sie können den Browsertab jetzt schließen. </p>
+            <p>Vielen Dank für ihre Teilnahme!</p> `,
+        }
+
+
+        var ifUploadSuccess = {
+            timeline: [ifUploadSuccessTrial],
+            conditional_function: function(){
+                return jsPsych.data.get().last(1).values()[0].value.upload;
+            }
+        }
+
+        var ifUploadFailTrial1 = {
+            type: "html-button-response",
+            stimulus: `<p>Leider gab es technische Probleme beim Hochladen der Daten.</p>
+            <p> Wenn sie uns dennoch ihre Studienergebnisse mitteilen möchten, können sie mit dem Button ihre Ergebnisse herunterladen und das Archiv per Mail an beispiel@beispiel.com senden.</p>`,
+            choices: ['Herunterladen'],
+        }
+
+        var downloadTrial = {
+            type: 'call-function',
+            func: downloadData
+        }
+
+        var ifUploadFailTrial2 = {
+            type: "html-keyboard-response",
+            stimulus: `<p>Bitte senden sie das Archiv an beipiel@beispiel.com. Sie können den Browsertab nun schließen.</p>
+            <p>Vielen Dank für ihre Teilnahme!</p>`,
+        }
+
+
+        var ifUploadFail = {
+            timeline: [ifUploadFailTrial1, downloadTrial, ifUploadFailTrial2],
+            conditional_function: function(){
+                console.log(jsPsych.data.get().last(1).values()[0].value.upload);
+                return !jsPsych.data.get().last(1).values()[0].value.upload;
+            }
+        }
+
         var timeline = [
             preload,
             welcome,
             permission,
-            startFullscreen, 
+            //startFullscreen, 
             init_camera_trial, 
-            calibration_trial, 
+            calibration_trial,
             createValidationTrial(1),
-            fam_videos,
-            createValidationTrial(2),
-            calibration_trial2,
-            createValidationTrial(3),
-            test_videos,
-            createValidationTrial(4),
-            stopFullscreen, 
-            end
+            //fam_videos,
+            //createValidationTrial(2),
+            //calibration_trial2,
+            //createValidationTrial(3),
+            //test_videos,
+            //createValidationTrial(4),
+            //stopFullscreen,
+            startUpload,
+            uploadTrial,
+            ifUploadSuccess,
+            ifUploadFail
         ];
 
 
@@ -442,8 +567,6 @@
             timeline: timeline,
             use_webaudio: false,
             on_finish: function() {
-                
-                
 
                 if(printDataDebug){
                     var jspsychelemnt = document.querySelector(".jspsych-display-element");
@@ -451,39 +574,7 @@
                     jsPsych.data.displayData();
                 }
 
-                // video name is the stimulus filepath, cleaning that up
-                var nameFromMediaPath = function(path){
-                    return path.toString().split("/").pop().split(".")[0];
-                }
-
-                
-                if(downloadTrialData){
-                    var zip = new JSZip();
-                    zip.file(subjectString+trialOrder+"_data.json", jsPsych.data.get().json());
-                    window.webcamVideoBlobs.forEach(({blob, name}, i) => {
-                        zip.file(subjectString+trialOrder+"_"+nameFromMediaPath(name)+".webm", blob);
-                    }); 
-
-                    zip.generateAsync({type:"blob"})
-                    .then(function(content) {
-                        var a = document.createElement('a');
-                        a.style.display = 'none';
-                        document.body.append(a);
-                        var url = URL.createObjectURL(content);
-                        a.href = url;
-                        a.download = "experiment.zip";
-                        a.click();
-                        URL.revokeObjectURL(url);
-                        a.remove();
-                    });
-                }
-
-                if(!preventDataUpload){
-                    saveData("json", subjectString+trialOrder+"_data", jsPsych.data.get().json());
-                    window.webcamVideoBlobs.forEach(({blob, name}, i) => {
-                        saveData("webm", subjectString+trialOrder+"_"+nameFromMediaPath(name), blob);
-                    }); 
-                }
+                if(downloadTrialData){downloadData()}
             },
             extensions: [
                 {type: 'webgazer'}
