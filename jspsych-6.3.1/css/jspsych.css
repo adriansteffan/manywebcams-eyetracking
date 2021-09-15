@@ -5,8 +5,6 @@
  * experiments look polished without any additional styles.
  */
 
- @import url(https://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,400,700);
-
 /* Container holding jsPsych content */
 
  .jspsych-display-element {
@@ -43,7 +41,8 @@
 /* fonts and type */
 
 .jspsych-display-element {
-  font-family: 'Open Sans', 'Arial', sans-serif;
+  font-family: 'Arial', sans-serif;
+  font-weight: 100;
   font-size: 18px;
   line-height: 1.6em;
 }
@@ -51,7 +50,8 @@
 /* Form elements like input fields and buttons */
 
 .jspsych-display-element input[type="text"] {
-  font-family: 'Open Sans', 'Arial', sans-serif;
+  font-family: 'Arial', sans-serif;
+  font-weight: 100;
   font-size: 14px;
 }
 
@@ -62,7 +62,8 @@
   margin: 0px;
   font-size: 14px;
   font-weight: 400;
-  font-family: 'Open Sans', 'Arial', sans-serif;
+  font-family: 'Arial', sans-serif;
+  font-weight: 100;
   cursor: pointer;
   line-height: 1.4;
   text-align: center;

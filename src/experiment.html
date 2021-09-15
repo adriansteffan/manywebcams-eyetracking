@@ -211,45 +211,50 @@
 
         var calibration_trial = {
             type: 'webgazer-calibrate',
-            calibration_points: [[50,50],],// [50,12], [12,12], [12,50], [12,88], [50,88], [88,88], [88,50], [88,12]],
+            calibration_points: [[50,50], [50,12], [12,12], [12,50], [12,88], [50,88], [88,88], [88,50], [88,12]],
             calibration_mode: 'view',
             time_per_point: 1900,
             extensions: [
-                    {
-                        type: 'webcam-recorder', 
-                        params: {
-                            videoName: "calibration"
-                        }
-                    },
-                    {
-                        type: 'background-audio', 
-                        params: {}
+                {
+                    type: 'webcam-recorder', 
+                    params: {
+                        videoName: "calibration"
                     }
+                },
+                {
+                    type: 'background-audio', 
+                    params: {}
+                }
             ],
             data: {
                 task: 'webgazer-calibrate',
+                windowHeight: () => window.innerHeight,
+                windowWidth: () => window.innerWidth,
             }
         }
 
+
         var calibration_trial2 = {
             type: 'webgazer-calibrate',
-            calibration_points: [[12,50], [50,50], [88,50], [50,12], [50,88]],
+            calibration_points: [[50,50], [12,12], [12,88], [88,88], [88,12]],
             calibration_mode: 'view',
             time_per_point: 2000,
             extensions: [
-                    {
-                        type: 'webcam-recorder', 
-                        params: {
-                            videoName: "calibration2"
-                        }
-                    },
-                    {
-                        type: 'background-audio', 
-                        params: {}
+                {
+                    type: 'webcam-recorder', 
+                    params: {
+                        videoName: "calibration2"
                     }
+                },
+                {
+                    type: 'background-audio', 
+                    params: {}
+                }
             ],
             data: {
                 task: 'webgazer-calibrate',
+                windowHeight: () => window.innerHeight,
+                windowWidth: () => window.innerWidth,
             }
         }
 
@@ -261,21 +266,20 @@
                 roi_radius: 200,
                 validation_duration: 4000,
                 extensions: [
-                        {
-                            type: 'webcam-recorder', 
-                            params: {
-                                videoName: "validation" + number
-                            }
-                        },
-                        {
-                            type: 'background-audio', 
-                            params: {}
+                    {
+                        type: 'webcam-recorder', 
+                        params: {
+                            videoName: "validation" + number
                         }
+                    },
+                    {
+                        type: 'background-audio', 
+                        params: {}
+                    }
                 ],
             }
         }
             
-        
         
         var instructions = {
             type: "html-keyboard-response",
@@ -286,26 +290,6 @@
         };
             
         
-
-        var fixation = {
-            type: 'html-keyboard-response',
-            stimulus: '<div style="font-size:60px;">+</div>',
-            choices: jsPsych.NO_KEYS,
-            trial_duration: 2000,
-            data: {
-                task: 'fixation',
-                windowHeight: () => window.innerHeight,
-                windowWidth: () => window.innerWidth,
-            },
-            extensions: [
-                {
-                    type: 'webgazer', 
-                    params: { 
-                        targets: ['#scene']
-                    }
-                }
-            ],
-        }
 
         var video = {
             type: "video-keyboard-response",
@@ -545,17 +529,17 @@
             preload,
             welcome,
             permission,
-            //startFullscreen, 
+            startFullscreen, 
             init_camera_trial, 
             calibration_trial,
             createValidationTrial(1),
-            //fam_videos,
-            //createValidationTrial(2),
-            //calibration_trial2,
-            //createValidationTrial(3),
-            //test_videos,
-            //createValidationTrial(4),
-            //stopFullscreen,
+            fam_videos,
+            createValidationTrial(2),
+            calibration_trial2,
+            createValidationTrial(3),
+            test_videos,
+            createValidationTrial(4),
+            stopFullscreen,
             startUpload,
             uploadTrial,
             ifUploadSuccess,
@@ -583,6 +567,3 @@
     
     </script>
 </html>
-
-<!-- Something to think about: make choosing images/gifs for the fixation points optional-->
-<!-- Something to think about: improve the audio extension-->
