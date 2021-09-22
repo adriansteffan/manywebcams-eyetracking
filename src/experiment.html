@@ -160,8 +160,8 @@
 
         var welcome = {
             type: "html-keyboard-response",
-            stimulus: `<meta charset="utf-8"/><p>Willkommen zu unserer Studie! Zur Erinnerung: Ab der nächsten Seite wird ihre Webcam mit der Aufnahme beginnen. </p>
-            <p>Wenn Sie bereit sind, mit der Einführung zu beginnen, drücken Sie eine beliebige Taste auf ihrer Tastatur.</p>`,
+            stimulus: `<meta charset="utf-8"/><p>Willkommen zu unserer Studie! Zur Erinnerung: Ab der nächsten Seite wird Ihre Webcam mit der Aufnahme beginnen. </p>
+            <p>Wenn Sie bereit sind, mit der Einführung zu beginnen, drücken Sie eine beliebige Taste auf Ihrer Tastatur.</p>`,
             data: {
                 userAgent: navigator.userAgent
             }
@@ -172,7 +172,7 @@
             stimulus: `<p>Ihr Browser fragt Sie nun, ob Sie die Nutzung der Webcam und des Mikrofon erlauben möchten.</p>
             <p>Drücken Sie bitte auf "Akzeptieren"/"Erlauben", da beide für die Studie benötigt werden.</p>
             <p>Keine Angst: Diese Berechtigung bezieht sich nur auf die Dauer dieser Studie, andere Seiten erhalten keine zusätzlichen Berechtigungen.</p>
-            <p>Bitte akzeptieren Sie dies und drücken dann eine beliebige Taste auf ihrer Tastatur, um fortzufahren.</p>`,
+            <p>Bitte akzeptieren Sie dies und drücken dann eine beliebige Taste auf Ihrer Tastatur, um fortzufahren.</p>`,
             extensions: [
                     {
                         type: 'webcam-recorder', 
@@ -193,7 +193,7 @@
 
         var init_camera_trial = {
             type: 'webgazer-init-camera',
-            instructions: `<p>Positionieren Sie bitte den Kopf ihres Kindes so, dass die Webcam die Augen gut sehen kann.</p>
+            instructions: `<p>Positionieren Sie bitte den Kopf Ihres Kindes so, dass die Webcam die Augen gut sehen kann.</p>
             <p>Den Kopf bitte nun so positionieren, dass er auf dem Video mittig innerhalb des Vierecks zu sehen ist.</p>
             <p>Für das Experiment ist es wichtig, den Kopf möglichst ruhig zu halten, vergewissern Sie sich also, dass ihr Kind eine bequeme Sitzposition hat.</p>
             <p>Wenn das Gesicht zentriert ist und die Box grün aufleuchtet, können Sie auf den "Start" Button drücken, um mit der Wiedergabe der Videos zu beginnen.</p>`,
@@ -407,7 +407,7 @@
 
         var startUpload = {
             type: 'html-button-response',
-            stimulus: `<p>Klicken Sie auf den "Abschicken" Button unten, um ihre Versuchsdaten abzuschicken. </p>
+            stimulus: `<p>Klicken Sie auf den "Abschicken" Button unten, um Ihre Versuchsdaten abzuschicken. </p>
             <p>Das Hochladen wird 1-2 Minuten dauern und Sie anschließend auf die nächste Seite weiterleiten. Lassen den Browsertab bitte geöffnet, bis sie weitere Anweisungen erhalten.</p>
             <p>Das Webcam Symbol könnte weiterhin aufleuten, es werden jedoch keine weiteren Aufnahmen erstellt.</p>`,
             choices: ['Abschicken'],
@@ -487,7 +487,7 @@
         var ifUploadSuccessTrial = {
             type: "html-keyboard-response",
             stimulus: `<p>Die Daten wurden erfolgreich übermittelt, Sie können den Browsertab jetzt schließen. </p>
-            <p>Vielen Dank für ihre Teilnahme!</p> `,
+            <p>Vielen Dank für Ihre Teilnahme!</p> `,
         }
 
 
@@ -501,7 +501,7 @@
         var ifUploadFailTrial1 = {
             type: "html-button-response",
             stimulus: `<p>Leider gab es technische Probleme beim Hochladen der Daten.</p>
-            <p> Wenn sie uns dennoch ihre Studienergebnisse mitteilen möchten, können Sie mit dem Button ihre Ergebnisse herunterladen und das Archiv per Mail an beispiel@beispiel.com senden.</p>`,
+            <p> Wenn sie uns dennoch Ihre Studienergebnisse mitteilen möchten, können Sie mit dem Button Ihre Ergebnisse herunterladen und das Archiv per Mail an beispiel@beispiel.com senden.</p>`,
             choices: ['Herunterladen'],
         }
 
@@ -513,7 +513,7 @@
         var ifUploadFailTrial2 = {
             type: "html-keyboard-response",
             stimulus: `<p>Bitte senden Sie das Archiv an tobias.schuwerk@psy.lmu.de. Sie können den Browsertab nun schließen.</p>
-            <p>Vielen Dank für ihre Teilnahme!</p>`,
+            <p>Vielen Dank für Ihre Teilnahme!</p>`,
         }
 
 
