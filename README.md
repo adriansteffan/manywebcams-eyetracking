@@ -122,11 +122,11 @@ in the root directory.
 ### URL parameters
 After deploying the container, there are a few options for the execution of the online experiment that can be configured using url paramters.
 
-For example, to if you want the output data to be linked to a participant with the id "participant1", and want to choose the stimulus order "Trial order 5", you use the following link: 
+For example, to if you want the output data to be linked to a participant with the id "participant1", and want to choose the stimulus order "Trial order A", you use the following link: 
 
 
 ```
-yoururl.com?id=participant1&trial_order=5
+yoururl.com?id=participant1&trial_order=A
 ```
 
 The following table gives you an overview of all available parameters:
@@ -134,7 +134,7 @@ The following table gives you an overview of all available parameters:
 | url parameter  | possible values| default value |  description |
 | ------------- | ------------- | ------------- | ------------- |
 | id  | string | a randomly generated uuid  | the id that is attached to the output data, used to identify a participant|
-| trial_order  | integer (1-32) | a random value between 1 and 32 | the choice and order of stimuli as specified by the proposal paper |
+| trial_order  | character ("A" or "B") | a random choice of either "A" or "B" | the choice and order of stimuli as specified by the proposal paper |
 | show_aoi  | true/false | false | a flag to indicate whether the aois should be overlayed over the stimuli (for debugging purposes) |
 | download_data  | true/false | false | a flag to indicate whether the browser should download a the generated data after the trial finishes |
 | prevent_upload  | true/false | false | a flag to indicate if the upload of trial data to the server should be prevented|

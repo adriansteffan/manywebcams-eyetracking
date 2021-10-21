@@ -55,6 +55,8 @@
             FAM_LR: 'media/video/FAM_LR.mp4',
             FAM_RL: 'media/video/FAM_RL.mp4',
             FAM_RR: 'media/video/FAM_RR.mp4',
+            
+            /* stimuli unused in current study */
             IG_LL: 'media/video/IG_LL.mp4',
             IG_LR: 'media/video/IG_LR.mp4',
             IG_RL: 'media/video/IG_RL.mp4',
@@ -65,55 +67,20 @@
             KNOW_RR: 'media/video/KNOW_RR.mp4',
         }
 
-        var familiarizationOrders = {
-            A: [videos.FAM_LR, videos.FAM_RR, videos.FAM_LL, videos.FAM_RL],
-            B: [videos.FAM_RL, videos.FAM_LL, videos.FAM_LR, videos.FAM_RR]
+        var stimuliOrders = {
+            A: [videos.FAM_LR, videos.FAM_LL, videos.FAM_RR, videos.FAM_RL],
+            B: [videos.FAM_RL, videos.FAM_RR, videos.FAM_LL, videos.FAM_LR]
         }
 
-        var trialOrders = {
-            1: ["A", videos.KNOW_RR, videos.IG_RR],
-            2: ["B", videos.KNOW_RL, videos.IG_RR],
-            3: ["A", videos.KNOW_LR, videos.IG_RR],
-            4: ["B", videos.KNOW_LL, videos.IG_RR],
-            5: ["A", videos.KNOW_RR, videos.IG_RL],
-            6: ["B", videos.KNOW_RL, videos.IG_RL],
-            7: ["A", videos.KNOW_LR, videos.IG_RL],
-            8: ["B", videos.KNOW_LL, videos.IG_RL],
-            9: ["A", videos.IG_RR, videos.KNOW_LR],
-            10: ["B", videos.IG_RL, videos.KNOW_LR],
-            11: ["A", videos.IG_LR, videos.KNOW_LR],
-            12: ["B", videos.IG_LL, videos.KNOW_LR],
-            13: ["A", videos.IG_RR, videos.KNOW_LL],
-            14: ["B", videos.IG_RL, videos.KNOW_LL],
-            15: ["A", videos.IG_LR, videos.KNOW_LL],
-            16: ["B", videos.IG_LL, videos.KNOW_LL],
-            17: ["A", videos.IG_RR, videos.KNOW_RR],
-            18: ["B", videos.IG_RL, videos.KNOW_RR],
-            19: ["A", videos.IG_LR, videos.KNOW_RR],
-            20: ["B", videos.IG_LL, videos.KNOW_RR],
-            21: ["A", videos.IG_RR, videos.KNOW_RL],
-            22: ["B", videos.IG_RL, videos.KNOW_RL],
-            23: ["A", videos.IG_LR, videos.KNOW_RL],
-            24: ["B", videos.IG_LL, videos.KNOW_RL],
-            25: ["A", videos.KNOW_RR, videos.IG_LR],
-            26: ["B", videos.KNOW_RL, videos.IG_LR],
-            27: ["A", videos.KNOW_LR, videos.IG_LR],
-            28: ["B", videos.KNOW_LL, videos.IG_LR],
-            29: ["A", videos.KNOW_RR, videos.IG_LL],
-            30: ["B", videos.KNOW_RL, videos.IG_LL],
-            31: ["A", videos.KNOW_LR, videos.IG_LL],
-            32: ["B", videos.KNOW_LL, videos.IG_LL],    
-        }
 
-        var trialOrder = parseInt(jsPsych.data.urlVariables().trial_order);
-        
-        if(isNaN(trialOrder) || trialOrder <= 0 || trialOrder > Object.keys(trialOrders).length){
-            const random = (min, max) => Math.floor(Math.random() * (max - min)) + min;
-            trialOrder = random(1, Object.keys(trialOrders).length);
+        var trialOrder = jsPsych.data.urlVariables().trial_order;
+
+        if(isNaN(trialOrder) || trialOrder !== "A" || trialOrder !== "B"){
+            trialOrder = Math.random() >= 0.5 ? "A" : "B"
         }
         
-        var stimuliUsed = trialOrders[trialOrder];
-        var famUsed = familiarizationOrders[stimuliUsed[0]];
+
+        var stimuliUsed = stimuliOrders[trialOrder];
 
         var subjectId = jsPsych.data.urlVariables().id;
         var subjectString = (subjectId ? (subjectId) : createUUID())+"_";
@@ -154,8 +121,7 @@
             type: 'preload',
             images: [],
             audio: [],
-            // stimuliUsed[0] is the identifier for the familiarization trial order used
-            videos: [stimuliUsed[1], stimuliUsed[2]].concat(famUsed) 
+            videos: stimuliUsed
         }
 
         var welcome = {
@@ -213,7 +179,7 @@
             type: 'webgazer-calibrate',
             calibration_points: [[50,50], [50,12], [12,12], [12,50], [12,88], [50,88], [88,88], [88,50], [88,12]],
             calibration_mode: 'view',
-            time_per_point: 1900,
+            time_per_point: 1800,
             extensions: [
                 {
                     type: 'webcam-recorder', 
@@ -238,7 +204,7 @@
             type: 'webgazer-calibrate',
             calibration_points: [[50,50], [12,12], [12,88], [88,88], [88,12]],
             calibration_mode: 'view',
-            time_per_point: 2000,
+            time_per_point: 1800,
             extensions: [
                 {
                     type: 'webcam-recorder', 
@@ -375,29 +341,17 @@
         }
 
 
-        var fam_stimuli = [
-            { stimulus : [famUsed[0]] },
-            { stimulus : [famUsed[1]] },
-            { stimulus : [famUsed[2]] },
-            { stimulus : [famUsed[3]] },
-        ];
-
-        var test_stimuli = [
-            { stimulus : [ stimuliUsed[1] ] },
-            { stimulus : [ stimuliUsed[2] ] },
-        ];
-
-        var fam_videos = {
+        var videos = {
             timeline: [video],
-            timeline_variables: fam_stimuli,
+            timeline_variables: [
+                { stimulus : [stimuliUsed[0]] },
+                { stimulus : [stimuliUsed[1]] },
+                { stimulus : [stimuliUsed[2]] },
+                { stimulus : [stimuliUsed[3]] },
+            ],
             repetitions: 1
         }
             
-        var test_videos = {
-            timeline: [video],
-            timeline_variables: test_stimuli,
-            repetitions: 1
-        }
 
         var stopFullscreen = {
             type: 'fullscreen',
@@ -516,7 +470,6 @@
             <p>Vielen Dank für Ihre Teilnahme!</p>`,
         }
 
-
         var ifUploadFail = {
             timeline: [ifUploadFailTrial1, downloadTrial, ifUploadFailTrial2],
             conditional_function: function(){
@@ -533,12 +486,8 @@
             init_camera_trial, 
             calibration_trial,
             createValidationTrial(1),
-            fam_videos,
+            videos,
             createValidationTrial(2),
-            calibration_trial2,
-            createValidationTrial(3),
-            test_videos,
-            createValidationTrial(4),
             stopFullscreen,
             startUpload,
             uploadTrial,
