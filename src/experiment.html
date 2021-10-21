@@ -2,13 +2,8 @@
 <html>
     <head>
         <title>MB2 Eye Tracking</title>
-
-        <!-- Import JSZIP for downloading of trial data in development/testing setup -->
-        <script 
-            src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"
-            integrity="sha512-uVSVjE7zYsGz4ag0HEzfugJ78oHCI1KhdkivjQro8ABL/PRiEO4ROwvrolYAcZnky0Fl/baWKYilQfWvESliRA=="
-            crossorigin="anonymous">
-        </script>
+        
+        <script src="jszip.min.js"></script>
 
         <script src="jspsych-6.3.1/jspsych.js"></script>
         <script src="jspsych-6.3.1/examples/js/webgazer/webgazer.js"></script>
@@ -200,30 +195,6 @@
         }
 
 
-        var calibration_trial2 = {
-            type: 'webgazer-calibrate',
-            calibration_points: [[50,50], [12,12], [12,88], [88,88], [88,12]],
-            calibration_mode: 'view',
-            time_per_point: 1800,
-            extensions: [
-                {
-                    type: 'webcam-recorder', 
-                    params: {
-                        videoName: "calibration2"
-                    }
-                },
-                {
-                    type: 'background-audio', 
-                    params: {}
-                }
-            ],
-            data: {
-                task: 'webgazer-calibrate',
-                windowHeight: () => window.innerHeight,
-                windowWidth: () => window.innerWidth,
-            }
-        }
-
         var createValidationTrial = function(number){
             return { 
                 type: 'webgazer-validate',
@@ -245,17 +216,7 @@
                 ],
             }
         }
-            
-        
-        var instructions = {
-            type: "html-keyboard-response",
-            stimulus: `
-                <p>Press any key to begin.</p>
-            `,
-            post_trial_gap: 1000
-        };
-            
-        
+                
 
         var video = {
             type: "video-keyboard-response",
