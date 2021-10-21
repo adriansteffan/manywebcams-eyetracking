@@ -203,7 +203,7 @@ will create an `output` folder next to the script, with seperate folders for eac
 
 * Added a `background-audio` extension in `jspsych-6.3.1/extensions/jspsych-ext-background-audio.js`. It can be used to add a looping audio file (currently hardcoded) to the background of any trial.
 
-* Changed `jspsych-6.3.1/plugins/jspsych-webgazer-calibrate.js` and `jspsych-6.3.1/plugins/jspsych-webgazer-validate.js` to replace the dot with something more attention grabbing, making it better suited for infant research. (In the future, making this optional would be a good idea.)
+* Changed `jspsych-6.3.1/plugins/jspsych-webgazer-calibrate.js` and `jspsych-6.3.1/plugins/jspsych-webgazer-validate.js` to optionally replace the dot with something more attention grabbing and add background audio, making it better suited for infant research.
 
 ## Authors
 

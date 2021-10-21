@@ -42,7 +42,15 @@
       show_validation_data: {
         type: jsPsych.plugins.parameterType.BOOL,
         default: false
-      }
+      },
+      use_gif: {
+        type: jsPsych.plugins.parameterType.BOOL,
+        default: false
+      },
+      gif_source: {
+        type: jsPsych.plugins.parameterType.STRING,
+        default: 'media/img/rilakuma.gif',
+      },
     }
   }
 
@@ -141,8 +149,12 @@
     }
 
     function drawValidationPoint_CenterOffsetMode(x,y){
-      var pt_html = `<img src="media/img/rilakuma.gif" class="validation-point" id="calibration-point" style="width:${trial.point_size*5}px; position: absolute; transform: translate(-50%, -50%); left:calc(50% - ${trial.point_size/2}px + ${x}px); top:calc(50% - ${trial.point_size/2}px + ${y}px);"/>`
-      return pt_html; //`<div class="validation-point" style="width:${trial.point_size}px; height:${trial.point_size}px; border-radius:${trial.point_size}px; border: 1px solid #000; background-color: #333; position: absolute; left:calc(50% - ${trial.point_size/2}px + ${x}px); top:calc(50% - ${trial.point_size/2}px + ${y}px);"></div>`
+      if(trial.use_gif){
+        var pt_html = `<img src="`+trial.gif_source+`" class="validation-point" id="calibration-point" style="width:${trial.point_size*5}px; position: absolute; transform: translate(-50%, -50%); left:calc(50% - ${trial.point_size/2}px + ${x}px); top:calc(50% - ${trial.point_size/2}px + ${y}px);"/>`;
+      }else{
+        var pt_html = `<div class="validation-point" style="width:${trial.point_size}px; height:${trial.point_size}px; border-radius:${trial.point_size}px; border: 1px solid #000; background-color: #333; position: absolute; left:calc(50% - ${trial.point_size/2}px + ${x}px); top:calc(50% - ${trial.point_size/2}px + ${y}px);"></div>`
+      }
+      return pt_html; 
     }
 
     function drawCircle(target_x, target_y, dx, dy, r){

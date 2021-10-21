@@ -173,7 +173,9 @@
             type: 'webgazer-calibrate',
             calibration_points: [[50,50], [50,12], [12,12], [12,50], [12,88], [50,88], [88,88], [88,50], [88,12]],
             calibration_mode: 'view',
-            time_per_point: 1800,
+            time_per_point: 2050,
+            use_audio: true,
+            use_gif: true,
             extensions: [
                 {
                     type: 'webcam-recorder', 
@@ -181,10 +183,6 @@
                         videoName: "calibration"
                     }
                 },
-                {
-                    type: 'background-audio', 
-                    params: {}
-                }
             ],
             data: {
                 task: 'webgazer-calibrate',
@@ -201,6 +199,7 @@
                 validation_point_coordinates: 'center-offset-pixels',
                 roi_radius: 200,
                 validation_duration: 4000,
+                use_gif: true,
                 extensions: [
                     {
                         type: 'webcam-recorder', 

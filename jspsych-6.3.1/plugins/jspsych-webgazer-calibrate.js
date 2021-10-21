@@ -38,11 +38,35 @@ jsPsych.plugins["webgazer-calibrate"] = (function() {
         time_per_point: {
           type: jsPsych.plugins.parameterType.STRING,
           default: 1000
+        },
+        use_gif: {
+          type: jsPsych.plugins.parameterType.BOOL,
+          default: false
+        },
+        gif_source: {
+          type: jsPsych.plugins.parameterType.STRING,
+          default: 'media/img/rilakuma.gif',
+        },
+        use_audio: {
+          type: jsPsych.plugins.parameterType.BOOL,
+          default: false
+        },
+        audio_source: {
+          type: jsPsych.plugins.parameterType.STRING,
+          default: 'media/audio/ding.wav',
         }
       }
     }
   
     plugin.trial = function(display_element, trial) {
+
+      if(trial.use_audio){
+        audioElement = document.createElement('audio');
+        audioElement.setAttribute('preload','auto');
+        audioElement.setAttribute('src', trial.audio_source);
+        audioElement.setAttribute('autoplay', 'autoplay');
+        audioElement.loop=true;
+      }
   
       var html = `
         <div id='webgazer-calibrate-container' style='position: relative; width:100vw; height:100vh'>
@@ -92,10 +116,15 @@ jsPsych.plugins["webgazer-calibrate"] = (function() {
       }
 
       function calibration_display_gaze_only(pt){
-        //var pt_html = `<div id="calibration-point" style="width:${trial.point_size}px; height:${trial.point_size}px; border-radius:${trial.point_size}px; border: 1px solid #000; background-color: #333; position: absolute; left:${pt[0]}%; top:${pt[1]}%;"></div>`
-        var pt_html = `<img src="media/img/rilakuma.gif" id="calibration-point" style="width:${trial.point_size*5}px; position: absolute; transform: translate(-50%, -50%); left:${pt[0]}%; top:${pt[1]}%;"/>`
+        if(trial.use_gif){
+          var pt_html = `<img src="`+trial.gif_source+`" id="calibration-point" style="width:${trial.point_size*5}px; position: absolute; transform: translate(-50%, -50%); left:${pt[0]}%; top:${pt[1]}%;"/>`
+        }else{
+          var pt_html = `<div id="calibration-point" style="width:${trial.point_size}px; height:${trial.point_size}px; border-radius:${trial.point_size}px; border: 1px solid #000; background-color: #333; position: absolute; left:${pt[0]}%; top:${pt[1]}%;"></div>`
+        }
+
         wg_container.innerHTML = pt_html;
 
+        
         var pt_dom = wg_container.querySelector('#calibration-point');
         
         if(trial.calibration_mode == 'click'){
@@ -106,6 +135,9 @@ jsPsych.plugins["webgazer-calibrate"] = (function() {
         }
         
         if(trial.calibration_mode == 'view'){
+
+          if(trial.use_audio){audioElement.play();}
+
           var br = pt_dom.getBoundingClientRect();
           var x = br.left + br.width / 2;
           var y = br.top + br.height / 2;
@@ -121,6 +153,12 @@ jsPsych.plugins["webgazer-calibrate"] = (function() {
             if(performance.now() < pt_finish){
               requestAnimationFrame(watch_dot);
             } else {
+
+              if(trial.use_audio){
+                audioElement.pause();
+                audioElement.currentTime = 0;
+              }
+              
               next_calibration_point();
             }
           })
