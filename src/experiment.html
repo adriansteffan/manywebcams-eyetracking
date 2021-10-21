@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>MB2 Eye Tracking</title>
+        <title>Many Webcams - Eye-tracking Experiment</title>
         
         <script src="jszip.min.js"></script>
 
@@ -38,7 +38,7 @@
 
         function createUUID(){
             /*We need a way to identify subjects that did not specify an id in the url
-            a less messy aproach would be to generate these with a sophisticated backend server*/
+            a cleaner aproach would be to generate these with a sophisticated backend server*/
 
             let dt = new Date().getTime()
             
@@ -72,14 +72,12 @@
             B: [videos.FAM_RL, videos.FAM_RR, videos.FAM_LL, videos.FAM_LR]
         }
 
-
         var trialOrder = jsPsych.data.urlVariables().trial_order;
 
         if(isNaN(trialOrder) || trialOrder !== "A" || trialOrder !== "B"){
             trialOrder = Math.random() >= 0.5 ? "A" : "B"
         }
     
-
         var stimuliUsed = stimuliOrders[trialOrder];
 
         var subjectId = jsPsych.data.urlVariables().id;
@@ -127,23 +125,25 @@
         }
 
         var welcome = {
-            type: "html-keyboard-response",
+            type: "html-button-response",
             stimulus: `<meta charset="utf-8"/>` + lang.welcome,
+            choices: [lang.welcomeButton],
             data: {
                 userAgent: navigator.userAgent
             }
         };
 
         var permission = {
-            type: "html-keyboard-response",
+            type: "html-button-response",
             stimulus: lang.permission,
+            choices: [lang.permissionButton],
             extensions: [
-                    {
-                        type: 'webcam-recorder', 
-                        params: {
-                            videoName: "permission"
-                        }
+                {
+                    type: 'webcam-recorder', 
+                    params: {
+                        videoName: "permission"
                     }
+                }
             ],
         };
 
@@ -159,12 +159,12 @@
             instructions: lang.initCameraTrial,
             button_text: lang.initCameraTrialButton,
             extensions: [
-                    {
-                        type: 'webcam-recorder', 
-                        params: {
-                            videoName: "webcam-init"
-                        }
+                {
+                    type: 'webcam-recorder', 
+                    params: {
+                        videoName: "webcam-init"
                     }
+                }
             ],
         }
 

@@ -46,6 +46,10 @@ This project was developed and deployed on MacOS and Ubuntu systems. A setup gui
 
 ## Deployment
 
+If you are partaking in a manybabies project and need a domain or assistance with setting up this experiment, contact [adriansteffan](https://github.com/adriansteffan) via [mail](mailto:adrian.steffan@hotmail.de).
+
+### With Docker (recommended)
+
 After cloning the repository, you can build the project by running 
 
 ```
@@ -66,7 +70,19 @@ docker-compose up -d
 
 in the [prod_mb2-webcam-eyetracking](prod_mb2-webcam-eyetracking/) directory.
 
-Depending on your setup, you might want to change the ip mapping in [prod_mb2-webcam-eyetracking/docker-compose.yml](prod_mb2-webcam-eyetracking/docker-compose.yml). I recommend leaving it the way it is and pointing an apache reverse proxy or something similar to the specified port.
+To make the container reachable from the internet, refer to [these instructions](https://gist.github.com/adriansteffan/48c9bda7237a8a7fcc5bb6987c8e1790) on how to set up your apache reverse proxy. Depending on your setup, you might want to change the ip mapping in [prod_mb2-webcam-eyetracking/docker-compose.yml](prod_mb2-webcam-eyetracking/docker-compose.yml).
+
+### Without Docker 
+
+This assumes that you already have a webserver (like apache) running and configured on your machine. This server needs to be reachable via HTTPS and support PHP. 
+
+After cloning the repository, run
+
+```
+./build.sh
+```
+
+in the root directory. Afterwards, copy the contents of `local-server/webroot` to the webroot of your webserver.
 
 
 ## Development
@@ -133,7 +149,7 @@ The following table gives you an overview of all available parameters:
 
 | url parameter  | possible values| default value |  description |
 | ------------- | ------------- | ------------- | ------------- |
-| lang  | string ("de" or "en") | "en"  | The language in which the instructions will be displayed |
+| lang  | string ("de" or "en") | "en"  | the language in which the instructions will be displayed |
 | id  | string | a randomly generated uuid  | the id that is attached to the output data, used to identify a participant|
 | trial_order  | character ("A" or "B") | a random choice of either "A" or "B" | the choice and order of stimuli as specified by the proposal paper |
 | show_aoi  | true/false | false | a flag to indicate whether the aois should be overlayed over the stimuli (for debugging purposes) |
