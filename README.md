@@ -133,6 +133,7 @@ The following table gives you an overview of all available parameters:
 
 | url parameter  | possible values| default value |  description |
 | ------------- | ------------- | ------------- | ------------- |
+| lang  | string ("de" or "en") | "en"  | The language in which the instructions will be displayed |
 | id  | string | a randomly generated uuid  | the id that is attached to the output data, used to identify a participant|
 | trial_order  | character ("A" or "B") | a random choice of either "A" or "B" | the choice and order of stimuli as specified by the proposal paper |
 | show_aoi  | true/false | false | a flag to indicate whether the aois should be overlayed over the stimuli (for debugging purposes) |
