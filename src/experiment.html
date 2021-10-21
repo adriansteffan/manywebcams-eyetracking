@@ -4,6 +4,7 @@
         <title>Many Webcams - Eye-tracking Experiment</title>
         
         <script src="jszip.min.js"></script>
+        <script src="config.js"></script>
 
         <script src="jspsych-6.3.1/jspsych.js"></script>
         <script src="jspsych-6.3.1/examples/js/webgazer/webgazer.js"></script>
@@ -115,7 +116,6 @@
             });
         }
 
-        
 
         var preload = {
             type: 'preload',
@@ -421,13 +421,16 @@
 
         var ifUploadFailTrial2 = {
             type: "html-keyboard-response",
-            stimulus: lang.ifUploadFailTrial2_1 + lang.ifUploadFailTrial2_2,
+            stimulus: lang.ifUploadFailTrial2_1 + (
+                config.alternativeDataUploadLink === "" ?
+                 lang.ifUploadFailTrial2_undefined : 
+                 ('<a target="_blank" href="'+config.alternativeDataUploadLink+'">'+config.alternativeDataUploadLink+'</a>') 
+                )+ lang.ifUploadFailTrial2_2,
         }
 
         var ifUploadFail = {
             timeline: [ifUploadFailTrial1, downloadTrial, ifUploadFailTrial2],
             conditional_function: function(){
-                console.log(jsPsych.data.get().last(1).values()[0].value.upload);
                 return !jsPsych.data.get().last(1).values()[0].value.upload;
             }
         }
@@ -436,7 +439,7 @@
             preload,
             welcome,
             permission,
-            startFullscreen, 
+            startFullscreen,
             initCameraTrial, 
             calibrationTrial,
             createValidationTrial(1),

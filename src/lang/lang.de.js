@@ -31,9 +31,10 @@ var lang = {
     <p> Wenn sie uns dennoch Ihre Studienergebnisse mitteilen möchten, können Sie mit dem Button Ihre Ergebnisse herunterladen und das Archiv per Mail an beispiel@beispiel.com senden.</p>`,
     ifUploadFailTrial1Button: 'Herunterladen',
 
-    ifUploadFailTrial2_1: `<p>Bitte laden sie das Archiv unter folgendem Link hoch: `,
+    ifUploadFailTrial2_1: `<p>Bitte laden sie das heruntergeladene Archiv unter folgendem Link hoch: `,
     ifUploadFailTrial2_2:`. Sie können den Browsertab nun schließen.</p>
-    <p>Vielen Dank für Ihre Teilnahme!</p>`
+    <p>Vielen Dank für Ihre Teilnahme!</p>`,
+    ifUploadFailTrial2_undefined: "(Kein Link vorhanden, bitte kontaktieren sie die Studienleiter)",
 
 
 };

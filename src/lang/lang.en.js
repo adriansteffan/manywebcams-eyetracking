@@ -1,7 +1,7 @@
 var lang = {
     welcome : `<p>Welcome to our study. Your webcam will start to record beginning on the next slide.</p>
     <p>When you are ready to start, press the "Continue" button below.</p>`,
-    permissionButton: "Continue",
+    welcomeButton: "Continue",
 
     permission: `<p>If this is your first time doing this experiment, your browser will ask you for permission to use the webcam and microphone.</p>
     <p>Please click on "Accept"/"Allow", as both of them are needed for the study to work.</p>
@@ -31,8 +31,9 @@ var lang = {
     <p> If you still want to send the data to us, press the "Download" button below and follow the instructions on the next slide.</p>`,
     ifUploadFailTrial1Button: 'Download',
 
-    ifUploadFailTrial2_1: `<p>Please upload the archive to`,
+    ifUploadFailTrial2_1: `<p>Please upload the archive you just downloaded to `,
     ifUploadFailTrial2_2: `. You can now close the browser tab</p>
     <p>Thank you for participating in our experiment!</p> `,
 
+    ifUploadFailTrial2_undefined: "(No link specified, please contact the study coordinators)",
 };
