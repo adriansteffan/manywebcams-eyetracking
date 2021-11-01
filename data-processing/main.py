@@ -3,6 +3,7 @@ import json
 
 import shutil
 import os
+import sys
 from os import listdir
 from os.path import isfile, join
 import subprocess
@@ -23,6 +24,7 @@ media_directory = "../media/video"
 output_directory = "./output"
 
 exclusion_csv_path = "./excluded_trials.csv"
+
 
 if not os.path.exists(output_directory):
     os.makedirs(output_directory)
@@ -324,17 +326,16 @@ for p in participants:
 
         video_path = data_directory + "/" + p + "_" + v + ".webm"
         output_path = "."
-        #tag_video(video_path, filtered[0], v, p)
+        if len(sys.argv) == 0 or sys.argv[1] == "t":
+            tag_video(video_path, filtered[0], v, p)
 
 
 print(samplingrate_exlusion_trials)
 
 
-df = pd.DataFrame(df_dict_list)
-df.to_csv(output_directory+"/transformed_data.csv", encoding='utf-8')
 
+df = pd.DataFrame(df_dict_list)
 df_resampled = pd.DataFrame(df_dict_resampled_list)
-df_resampled.to_csv(output_directory+"/transformed_data_resampled.csv", encoding='utf-8')
 
 agg_df = df[df['t ( 0 - 8000)'] <= 4000].groupby(['subid', 'condition', 'aoi']).size()
 relative_df = agg_df.groupby(['subid', 'condition']).apply(lambda x: x / float(x.sum())).reset_index(name='freq')
@@ -359,7 +360,11 @@ for p in participants:
                 df_fix_dict_list.append(dict(df_fix_dict))
 
 fix_df = pd.DataFrame(df_fix_dict_list)
-relative_df.append(fix_df).to_csv(output_directory+"/relative_data.csv", encoding='utf-8')
+
+if len(sys.argv) == 0 or sys.argv[1] == "p":
+    df.to_csv(output_directory + "/transformed_data.csv", encoding='utf-8')
+    df_resampled.to_csv(output_directory+"/transformed_data_resampled.csv", encoding='utf-8')
+    relative_df.append(fix_df).to_csv(output_directory+"/relative_data.csv", encoding='utf-8')
 
 
 def create_beeswarm(media_name, resampled_df, name_filter, show_sd_circle):
@@ -450,9 +455,10 @@ def create_beeswarm(media_name, resampled_df, name_filter, show_sd_circle):
     os.remove(pre_path)
 
 # create beeswarm plots
-for v in videos:
-    create_beeswarm(v, df_resampled, "", True)
-    create_beeswarm(v, df_resampled, "", False)
+if len(sys.argv) == 0 or sys.argv[1] == "b":
+    for v in videos:
+        create_beeswarm(v, df_resampled, "", True)
+        create_beeswarm(v, df_resampled, "", False)
 
 
 
