@@ -6,16 +6,16 @@ import os
 from os import listdir
 from os.path import isfile, join
 import subprocess
-
 import pandas as pd
-
 import statistics
 
 # information is not present in the data output, fix this at some point in time
 STIMULUS_ASPECT_RATIO = 4.0/3.0
 
 # sampling rate parameters in Hz
-MIN_SAMPLING_RATE = 7
+## cutoff point for excluding trials due to a too low sampling rate
+MIN_SAMPLING_RATE = 10
+## sampling rate that all sata gets resampled to - for visualization purposes only
 RESAMPLE_SAMPLING_RATE = 15
 
 data_directory = "../prod_mb2-webcam-eyetracking/data"
@@ -41,7 +41,7 @@ def translate_coordinates(video_aspect_ratio, win_height, win_width, vid_height,
         # scale y
         vidY = (winY/win_height)*vid_height
         return int(vidX), int(vidY), outside
-    else:  # full width video
+    else:  # full width video - not used in current study
         # TODO cutoff for other aspect ratios
         vidX = (winX / win_width) * vid_width
         return None, None, True
@@ -92,7 +92,7 @@ def tag_video(path, json_data, media_name, participant_name):
                          ])
         p2.wait()
 
-    # tag the video with eye tracking data
+    # tag the video with eye tracking data (dot for gaze coordinates)
 
     win_width = json_data['windowWidth']
     win_height = json_data['windowHeight']
@@ -147,9 +147,9 @@ for filename in files:
         continue
     try:
         filename_split = filename.split("_")
-        participant = "_".join(filename_split[:3])
+        participant = "_".join(filename_split[:2])
         participants.add(participant)
-        trial = ".".join("_".join(filename_split[3:]).split(".")[:-1])
+        trial = ".".join("_".join(filename_split[2:]).split(".")[:-1])
     except:
         continue
 
@@ -190,52 +190,42 @@ time_of_interest_dict = {
 
 interval_len_of_interest = 8000
 
-heatmap_times_for_screenshot = {
-    "FAM_LL": 25913,
-    "FAM_LR": 25902,
-    "FAM_RL": 25918,
-    "FAM_RR": 25896,
-    "KNOW_LL": 31205,
-    "KNOW_LR": 31244,
-    "KNOW_RL": 31265,
-    "KNOW_RR": 31209,
-    "IG_LL": 29776,
-    "IG_LR": 29797,
-    "IG_RL": 29791,
-    "IG_RR": 29830,
-}
 
-exclusion_check_colnames = ["FAM1_OK", "FAM2_OK", "FAM3_OK", "FAM4_OK", "TEST1_OK", "TEST2_OK"]
-exclusion_df = pd.read_csv(exclusion_csv_path)
 exclusion_dict = dict()
 
-for p_id in exclusion_df['id']:
-    if p_id not in exclusion_dict:
-        exclusion_dict[p_id] = []
+# If it exists, parse the csv for exclusions due to manual inspection
+if os.path.exists(exclusion_csv_path):
+    exclusion_check_colnames = ["FAM1_OK", "FAM2_OK", "FAM3_OK", "FAM4_OK"]
+    exclusion_df = pd.read_csv(exclusion_csv_path)
 
-for trial_index, colname in enumerate(exclusion_check_colnames):
-    for index, value in enumerate(exclusion_df[colname]):
-        if not isinstance(value, str) or value.lower() != "yes":
-            exclusion_dict[exclusion_df['id'][index]].append(trial_index+1)
+    for p_id in exclusion_df['id']:
+        if p_id not in exclusion_dict:
+            exclusion_dict[p_id] = []
 
-# data about exclusions -> refactor this later!
-merged_exclusion_list_adult = []
-merged_exclusion_list_child = []
-for key, value in exclusion_dict.items():
-    if "Child" in key:
-        merged_exclusion_list_child += value
-    else:
-        merged_exclusion_list_adult += value
+    for trial_index, colname in enumerate(exclusion_check_colnames):
+        for index, value in enumerate(exclusion_df[colname]):
+            if not isinstance(value, str) or value.lower() != "yes":
+                exclusion_dict[exclusion_df['id'][index]].append(trial_index+1)
 
-from collections import Counter
-print(Counter(merged_exclusion_list_adult))
-print(Counter(merged_exclusion_list_child))
+    # data about manual exclusions
+    merged_exclusion_list = []
+    for key, value in exclusion_dict.items():
+        merged_exclusion_list += value
+
+    from collections import Counter
+    print(Counter(merged_exclusion_list))
+    
+else:
+    print("No file containing manual trial exclusions found. Is this intended?")
+
+
 
 samplingrate_exlusion_trials = []
 
 df_dict_list = []
 df_dict_resampled_list = []
 
+# Transformation to fit the analysis scripts used by the manybabies study
 for p in participants:
 
     if not os.path.exists(output_directory+"/"+p):
@@ -250,7 +240,6 @@ for p in participants:
 
     df_dict = dict()
     df_dict['subid'] = p
-    df_dict['age_group'] = "kids" if "Child" in p else "adults"
     df_dict['age_in_days'] = 0
     df_dict['error_subj'] = False
 
@@ -462,54 +451,8 @@ def create_beeswarm(media_name, resampled_df, name_filter, show_sd_circle):
 
 # create beeswarm plots
 for v in videos:
-    for filter_name in ["Adult", "Child"]:
-        create_beeswarm(v, df_resampled, filter_name, True)
-        create_beeswarm(v, df_resampled, filter_name, False)
+    create_beeswarm(v, df_resampled, "", True)
+    create_beeswarm(v, df_resampled, "", False)
 
-"""
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-
-
-def data_coord2view_coord(p, vlen, pmin, pmax):
-    dp = pmax - pmin
-    dv = (p - pmin) / dp * vlen
-    return dv
-
-
-def nearest_neighbours(xs, ys, reso, n_neighbours):
-    im = np.zeros([reso, reso])
-    extent = [np.min(xs), np.max(xs), np.min(ys), np.max(ys)]
-
-    xv = data_coord2view_coord(xs, reso, extent[0], extent[1])
-    yv = data_coord2view_coord(ys, reso, extent[2], extent[3])
-    for x in range(reso):
-        for y in range(reso):
-            xp = (xv - x)
-            yp = (yv - y)
-
-            d = np.sqrt(xp**2 + yp**2)
-
-            im[y][x] = 1 / np.sum(d[np.argpartition(d.ravel(), n_neighbours)[:n_neighbours]])
-
-    return im, extent
-
-
-
-
-resolution = 40
-df_critical = df_resampled[df_resampled['t'] <= 4000]
-
-
-
-for v in videos:
-    im, extent = nearest_neighbours(df_critical[df_critical['stimulus'] == v]['x'].to_numpy(),
-                                    df_critical[df_critical['stimulus'] == v]['y'].to_numpy(),
-                                    resolution, 32)
-
-    plt.imshow(im, origin='lower', extent=extent, cmap=cm.jet)
-    plt.show()
-"""
 
 
