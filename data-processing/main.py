@@ -326,7 +326,7 @@ for p in participants:
 
         video_path = data_directory + "/" + p + "_" + v + ".webm"
         output_path = "."
-        if len(sys.argv) == 0 or sys.argv[1] == "t":
+        if len(sys.argv) == 1 or sys.argv[1] == "t":
             tag_video(video_path, filtered[0], v, p)
 
 
@@ -361,7 +361,7 @@ for p in participants:
 
 fix_df = pd.DataFrame(df_fix_dict_list)
 
-if len(sys.argv) == 0 or sys.argv[1] == "p":
+if len(sys.argv) == 1 or sys.argv[1] == "p":
     df.to_csv(output_directory + "/transformed_data.csv", encoding='utf-8')
     df_resampled.to_csv(output_directory+"/transformed_data_resampled.csv", encoding='utf-8')
     relative_df.append(fix_df).to_csv(output_directory+"/relative_data.csv", encoding='utf-8')
@@ -455,7 +455,7 @@ def create_beeswarm(media_name, resampled_df, name_filter, show_sd_circle):
     os.remove(pre_path)
 
 # create beeswarm plots
-if len(sys.argv) == 0 or sys.argv[1] == "b":
+if len(sys.argv) == 1 or sys.argv[1] == "b":
     for v in videos:
         create_beeswarm(v, df_resampled, "", True)
         create_beeswarm(v, df_resampled, "", False)
