@@ -149,9 +149,9 @@ for filename in files:
         continue
     try:
         filename_split = filename.split("_")
-        participant = "_".join(filename_split[:2])
+        participant = "_".join(filename_split[:-2])
         participants.add(participant)
-        trial = ".".join("_".join(filename_split[2:]).split(".")[:-1])
+        trial = ".".join("_".join(filename_split[-2:]).split(".")[:-1])
     except:
         continue
 
