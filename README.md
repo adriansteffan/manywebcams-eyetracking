@@ -168,6 +168,7 @@ The following table gives you an overview of all available parameters:
 | lang  | string ("de" or "en") | "en"  | the language in which the instructions will be displayed |
 | id  | string | a randomly generated uuid  | the id that is attached to the output data, used to identify a participant|
 | trial_order  | character ("A" or "B") | a random choice of either "A" or "B" | the choice and order of stimuli as specified by the proposal paper |
+| key  | string | null | A key in the [ManyKeys](https://github.com/adriansteffan/manykeys) format, used to encrypt the data before being transmitted to the server. If not present, the data will be stored on the server without encryption |
 | show_aoi  | true/false | false | a flag to indicate whether the aois should be overlayed over the stimuli (for debugging purposes) |
 | download_data  | true/false | false | a flag to indicate whether the browser should download a the generated data after the trial finishes |
 | prevent_upload  | true/false | false | a flag to indicate if the upload of trial data to the server should be prevented|
@@ -239,8 +240,6 @@ will create the beeswarm plots for all the stimuli videos, excluding all partici
 ## Authors
 
 - **Adrian Steffan** [adriansteffan](https://github.com/adriansteffan) [website](https://adriansteffan.com/)
-<!-- - **Tobias Schuwerk** [tobiasschuwerk](https://github.com/tobiasschuwerk) -->
-
 
 ## License
 

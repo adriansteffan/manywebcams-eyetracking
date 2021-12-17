@@ -4,6 +4,7 @@
         <title>Many Webcams - Eye-tracking Experiment</title>
         
         <script src="jszip.min.js"></script>
+        <script src="manykeys.js"></script>
 
         <script src="config.js"></script>
 
@@ -37,7 +38,6 @@
     <body></body>
     <script>        
         
-
         function createUUID(){
             /*We need a way to identify subjects that did not specify an id in the url
             a cleaner aproach would be to generate these with a sophisticated backend server*/
@@ -50,86 +50,6 @@
                 return (c=='x' ? r :(r&0x3|0x8)).toString(16)
             })
             return uuid
-        }
-
-        async function verifyChecksum(text, checksum) {
-            
-            const checkSumArray = Uint8Array.from(checksum, c => c.charCodeAt(0));
-
-            const msgUint8 = new TextEncoder().encode(text);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            
-            for(var i = 0; i<hashArray.length;i++){
-                if(hashArray[i] !== checkSumArray[i]){
-                    return false;
-                }
-            }
-            return true; 
-        }
-
-        async function encrypt(plaintext, key){ // Uint8Array, string
-
-
-            var sessionkey = await window.crypto.getRandomValues(new Uint8Array(32));
-            const sessionkey_encoded = await crypto.subtle.importKey("raw", sessionkey.buffer, 'AES-GCM', false, ["encrypt", "decrypt"]);
-
-            // from https://developers.google.com/web/updates/2012/06/How-to-convert-ArrayBuffer-to-and-from-String
-            function str2ab(str) {
-                const buf = new ArrayBuffer(str.length);
-                const bufView = new Uint8Array(buf);
-                for (let i = 0, strLen = str.length; i < strLen; i++) {
-                bufView[i] = str.charCodeAt(i);
-                }
-                return buf;
-            }
-  
-            // fetch the part of the PEM string between header and footer
-            const pemHeader = "-----BEGIN PUBLIC KEY-----";
-            const pemFooter = "-----END PUBLIC KEY-----";
-            const pemContents = key.substring(pemHeader.length, key.length - pemFooter.length);
-            // base64 decode the string to get the binary data
-            const binaryDerString = window.atob(pemContents);
-            // convert from a binary string to an ArrayBuffer
-            const binaryDer = str2ab(binaryDerString);
-            const key_encoded = await crypto.subtle.importKey("spki", binaryDer, {name: 'RSA-OAEP', hash: 'SHA-256'}, false, ["encrypt"]);
-
-            // Encrypt the session key with the public RSA key
-            var encSessKey = await window.crypto.subtle.encrypt(
-                {
-                name: "RSA-OAEP"
-                },
-                key_encoded,
-                sessionkey
-            );
-            
-
-            // Encrypt the data with the AES session key
-            // iv will be needed for decryption
-            const iv = await window.crypto.getRandomValues(new Uint8Array(16));
-
-            var ciphertextAndTag = await window.crypto.subtle.encrypt(
-                {
-                name: "AES-GCM",
-                iv: iv,
-                tagLength: 128,
-                },
-                sessionkey_encoded,
-                plaintext
-            );
-            
-            
-            const encSessKeyArray = new Uint8Array(encSessKey);
-            const ciphertextAndTagArray = new Uint8Array(ciphertextAndTag);
-
-            uint8stream = new Int8Array(encSessKeyArray.length + iv.length + ciphertextAndTagArray.length);
-            
-            uint8stream.set(encSessKeyArray);
-            uint8stream.set(iv, encSessKeyArray.length);
-            uint8stream.set(ciphertextAndTagArray, encSessKeyArray.length + iv.length);
-
-            return uint8stream;
-            
         }
 
         var videos = {  
@@ -168,23 +88,8 @@
         // if end to end encryption is used
         var publicKeyString = jsPsych.data.urlVariables().key;
         if (publicKeyString){
-            // Add = padding from the "truly" urlsafe b64
-            publicKeyStringPadded = publicKeyString + "=".repeat(4 - (publicKeyString.length % 4));
-            
-            
-
-            data = window.atob(publicKeyStringPadded.replace(/_/g, '/').replace(/-/g, '+'));
-            var checksum = data.substring(0,32);
-            var content = data.substring(32);
-
-            verifyChecksum(content, checksum).then(success => {if(!success){alert("Keyformat Invalid! Please request a new link")}});
-
-            var DELIMITER = ";"
-            var key = content.substr(0,content.indexOf(DELIMITER));
-            var username = content.substr(content.indexOf(DELIMITER)+1);
-            
-        }
-        
+            var {key, username} = ManyKeys.verifyAndReadKeystring(publicKeyString);
+        }        
 
         var downloadTrialData = false || !!(jsPsych.data.urlVariables().download_data);
         var aoiDebug = false || !!(jsPsych.data.urlVariables().show_aoi);
@@ -199,23 +104,52 @@
 
         function downloadData(){
             var zip = new JSZip();
-            zip.file(subjectString+trialOrder+"_data.json", jsPsych.data.get().json());
-            window.webcamVideoBlobs.forEach(({blob, name}, i) => {
-                zip.file(subjectString+trialOrder+"_"+nameFromMediaPath(name)+".webm", blob);
-            }); 
 
-            zip.generateAsync({type:"blob"})
-            .then(function(content) {
-                var a = document.createElement('a');
-                a.style.display = 'none';
-                document.body.append(a);
-                var url = URL.createObjectURL(content);
-                a.href = url;
-                a.download = "experiment.zip";
-                a.click();
-                URL.revokeObjectURL(url);
-                a.remove();
-            });
+            var downloadZip = (zip, username) => {
+                zip.generateAsync({type:"blob"})
+                .then(function(content) {
+                    var a = document.createElement('a');
+                    a.style.display = 'none';
+                    document.body.append(a);
+                    var url = URL.createObjectURL(content);
+                    a.href = url;
+                    a.download = "experiment"+ username +".zip";
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    a.remove();
+                });
+            }
+
+            if (publicKeyString){
+
+                (async function(){
+                    
+                    const dataList = [];
+
+                    const jsonDataEnc = await ManyKeys.encrypt(new TextEncoder().encode(jsPsych.data.get().json()), key);
+                    dataList.push({name: subjectString+trialOrder+"_data.json.enc", content: jsonDataEnc});
+
+                    for ({blob, name} of window.webcamVideoBlobs){
+                        let videoBuffer = await blob.arrayBuffer();
+                        let videoDataEnc = await ManyKeys.encrypt(new Uint8Array(videoBuffer), key);
+                        dataList.push({name: subjectString+trialOrder+"_"+nameFromMediaPath(name)+".webm.enc", content: videoDataEnc});
+                    } 
+
+                    return dataList;
+                })().then(dataList => {
+                    for (item of dataList) {
+                        zip.file(item.name, item.content);
+                    }
+                    downloadZip(zip, "_"+username);
+                });
+
+            }else{
+                zip.file(subjectString+trialOrder+"_data.json", jsPsych.data.get().json());
+                window.webcamVideoBlobs.forEach(({blob, name}, i) => {
+                    zip.file(subjectString+trialOrder+"_"+nameFromMediaPath(name)+".webm", blob);
+                }); 
+                downloadZip(zip, "");
+            }
         }
 
 
@@ -436,12 +370,10 @@
             repetitions: 1
         }
             
-
         var stopFullscreen = {
             type: 'fullscreen',
             fullscreen_mode: false 
         }
-
 
         var startUpload = {
             type: 'html-button-response',
@@ -460,8 +392,6 @@
                 }
 
                 function sendVideoBlobToServer({blob, name}) {
-                    var reader = new FileReader()
-                    
                     return new Promise(function (resolve, reject) {
                         var xhr = new XMLHttpRequest();
                         xhr.open('POST', 'write_data.php');
@@ -474,37 +404,26 @@
                         };
 
                         const transmitVideoData = (data, encrypted) => {
-                                xhr.send(JSON.stringify({
-                                    filename: subjectString+trialOrder+"_"+nameFromMediaPath(name),
-                                    filedata: data,
-                                    filetype: "webm" + (encrypted ? ".enc" : ""), 
-                                    username: (encrypted ? username : "")
-                                }));
-                            }
+                            xhr.send(JSON.stringify({
+                                filename: subjectString+trialOrder+"_"+nameFromMediaPath(name),
+                                filedata: data,
+                                filetype: "webm" + (encrypted ? ".enc" : ""), 
+                                username: (encrypted ? username : "")
+                            }));
+                        }
                         
-                            
-
                         if(publicKeyString){
-                            var b64converter = new FileReader();
-            
-                            b64converter.onloadend = function (event) {
-                                transmitVideoData(b64converter.result.split(",")[1], true);
-                            }
-
-                            blob.arrayBuffer().then(buffer => encrypt(new Uint8Array(buffer), key).then(data => b64converter.readAsDataURL(new Blob([data]))));
-
+                            blob.arrayBuffer().then(buffer => 
+                                ManyKeys.encrypt(new Uint8Array(buffer), key).then(data => transmitVideoData(data, true))
+                            );
                         }else{
                             var reader = new FileReader();
-
                             reader.onloadend = function (event) {
                                 transmitVideoData(reader.result, false);
                             }
-                            
                             reader.readAsDataURL(blob);
                         }
-    
-                        
-                    })
+                    });
                 }  
 
                 Promise.all(window.webcamVideoBlobs.map(sendVideoBlobToServer)).then((statusCodes) => {
@@ -531,12 +450,6 @@
                         }
                     };
 
-                    var b64converter = new FileReader();
-            
-                    b64converter.onloadend = function (event) {
-                        transmitJsonData(b64converter.result.split(",")[1], true);
-                    }
-                    
                     const transmitJsonData = (data, encrypted) => {
                         xhr.send(JSON.stringify({
                             filename: subjectString+trialOrder+"_data",
@@ -547,8 +460,7 @@
                     }
 
                     if(publicKeyString){
-                        console.log(jsPsych.data.get().json());
-                        encrypt(new TextEncoder().encode(jsPsych.data.get().json()), key).then(data => b64converter.readAsDataURL(new Blob([data])));
+                        ManyKeys.encrypt(new TextEncoder().encode(jsPsych.data.get().json()), key).then(data => transmitJsonData(data, true));
                     }else{
                         transmitJsonData(jsPsych.data.get().json(), false);
                     }
@@ -600,13 +512,13 @@
             preload,
             welcome,
             permission,
-            // startFullscreen,
-            // initCameraTrial, 
-            // calibrationTrial,
-            // createValidationTrial(1),
-            // videos,
-            // createValidationTrial(2),
-            // stopFullscreen,
+            startFullscreen,
+            initCameraTrial, 
+            calibrationTrial,
+            createValidationTrial(1),
+            videos,
+            createValidationTrial(2),
+            stopFullscreen,
             startUpload,
             uploadTrial,
             ifUploadSuccess,
