@@ -5,5 +5,6 @@ if [ ! -d "/var/www/data" ]; then
 fi
 
 chown -R www-data:www-data /var/www/data
+chmod -R 777 /var/www/data
 
 apachectl -D FOREGROUND
