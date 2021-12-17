@@ -4,6 +4,7 @@
         <title>Many Webcams - Eye-tracking Experiment</title>
         
         <script src="jszip.min.js"></script>
+
         <script src="config.js"></script>
 
         <script src="jspsych-6.3.1/jspsych.js"></script>
@@ -51,6 +52,86 @@
             return uuid
         }
 
+        async function verifyChecksum(text, checksum) {
+            
+            const checkSumArray = Uint8Array.from(checksum, c => c.charCodeAt(0));
+
+            const msgUint8 = new TextEncoder().encode(text);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            
+            for(var i = 0; i<hashArray.length;i++){
+                if(hashArray[i] !== checkSumArray[i]){
+                    return false;
+                }
+            }
+            return true; 
+        }
+
+        async function encrypt(plaintext, key){ // Uint8Array, string
+
+
+            var sessionkey = await window.crypto.getRandomValues(new Uint8Array(32));
+            const sessionkey_encoded = await crypto.subtle.importKey("raw", sessionkey.buffer, 'AES-GCM', false, ["encrypt", "decrypt"]);
+
+            // from https://developers.google.com/web/updates/2012/06/How-to-convert-ArrayBuffer-to-and-from-String
+            function str2ab(str) {
+                const buf = new ArrayBuffer(str.length);
+                const bufView = new Uint8Array(buf);
+                for (let i = 0, strLen = str.length; i < strLen; i++) {
+                bufView[i] = str.charCodeAt(i);
+                }
+                return buf;
+            }
+  
+            // fetch the part of the PEM string between header and footer
+            const pemHeader = "-----BEGIN PUBLIC KEY-----";
+            const pemFooter = "-----END PUBLIC KEY-----";
+            const pemContents = key.substring(pemHeader.length, key.length - pemFooter.length);
+            // base64 decode the string to get the binary data
+            const binaryDerString = window.atob(pemContents);
+            // convert from a binary string to an ArrayBuffer
+            const binaryDer = str2ab(binaryDerString);
+            const key_encoded = await crypto.subtle.importKey("spki", binaryDer, {name: 'RSA-OAEP', hash: 'SHA-256'}, false, ["encrypt"]);
+
+            // Encrypt the session key with the public RSA key
+            var encSessKey = await window.crypto.subtle.encrypt(
+                {
+                name: "RSA-OAEP"
+                },
+                key_encoded,
+                sessionkey
+            );
+            
+
+            // Encrypt the data with the AES session key
+            // iv will be needed for decryption
+            const iv = await window.crypto.getRandomValues(new Uint8Array(16));
+
+            var ciphertextAndTag = await window.crypto.subtle.encrypt(
+                {
+                name: "AES-GCM",
+                iv: iv,
+                tagLength: 128,
+                },
+                sessionkey_encoded,
+                plaintext
+            );
+            
+            
+            const encSessKeyArray = new Uint8Array(encSessKey);
+            const ciphertextAndTagArray = new Uint8Array(ciphertextAndTag);
+
+            uint8stream = new Int8Array(encSessKeyArray.length + iv.length + ciphertextAndTagArray.length);
+            
+            uint8stream.set(encSessKeyArray);
+            uint8stream.set(iv, encSessKeyArray.length);
+            uint8stream.set(ciphertextAndTagArray, encSessKeyArray.length + iv.length);
+
+            return uint8stream;
+            
+        }
+
         var videos = {  
             FAM_LL: 'media/video/FAM_LL.mp4',
             FAM_LR: 'media/video/FAM_LR.mp4',
@@ -83,6 +164,27 @@
 
         var subjectId = jsPsych.data.urlVariables().id;
         var subjectString = (subjectId ? (subjectId) : createUUID())+"_";
+
+        // if end to end encryption is used
+        var publicKeyString = jsPsych.data.urlVariables().key;
+        if (publicKeyString){
+            // Add = padding from the "truly" urlsafe b64
+            publicKeyStringPadded = publicKeyString + "=".repeat(4 - (publicKeyString.length % 4));
+            
+            
+
+            data = window.atob(publicKeyStringPadded.replace(/_/g, '/').replace(/-/g, '+'));
+            var checksum = data.substring(0,32);
+            var content = data.substring(32);
+
+            verifyChecksum(content, checksum).then(success => {if(!success){alert("Keyformat Invalid! Please request a new link")}});
+
+            var DELIMITER = ";"
+            var key = content.substr(0,content.indexOf(DELIMITER));
+            var username = content.substr(content.indexOf(DELIMITER)+1);
+            
+        }
+        
 
         var downloadTrialData = false || !!(jsPsych.data.urlVariables().download_data);
         var aoiDebug = false || !!(jsPsych.data.urlVariables().show_aoi);
@@ -361,7 +463,6 @@
                     var reader = new FileReader()
                     
                     return new Promise(function (resolve, reject) {
-                        var reader = new FileReader();
                         var xhr = new XMLHttpRequest();
                         xhr.open('POST', 'write_data.php');
                         xhr.setRequestHeader('Content-Type', 'application/json'); 
@@ -372,16 +473,37 @@
                             }
                         };
 
-                        reader.onloadend = function (event) {
-                            xhr.send(JSON.stringify({
-                                filename: subjectString+trialOrder+"_"+nameFromMediaPath(name),
-                                filedata: reader.result,
-                                filetype: "webm"
-                            }));
-        
+                        const transmitVideoData = (data, encrypted) => {
+                                xhr.send(JSON.stringify({
+                                    filename: subjectString+trialOrder+"_"+nameFromMediaPath(name),
+                                    filedata: data,
+                                    filetype: "webm" + (encrypted ? ".enc" : ""), 
+                                    username: (encrypted ? username : "")
+                                }));
+                            }
+                        
+                            
+
+                        if(publicKeyString){
+                            var b64converter = new FileReader();
+            
+                            b64converter.onloadend = function (event) {
+                                transmitVideoData(b64converter.result.split(",")[1], true);
+                            }
+
+                            blob.arrayBuffer().then(buffer => encrypt(new Uint8Array(buffer), key).then(data => b64converter.readAsDataURL(new Blob([data]))));
+
+                        }else{
+                            var reader = new FileReader();
+
+                            reader.onloadend = function (event) {
+                                transmitVideoData(reader.result, false);
+                            }
+                            
+                            reader.readAsDataURL(blob);
                         }
     
-                        reader.readAsDataURL(blob)
+                        
                     })
                 }  
 
@@ -409,11 +531,27 @@
                         }
                     };
 
-                    xhr.send(JSON.stringify({
-                        filename: subjectString+trialOrder+"_data",
-                        filedata: jsPsych.data.get().json(),
-                        filetype: "json"
-                    }));
+                    var b64converter = new FileReader();
+            
+                    b64converter.onloadend = function (event) {
+                        transmitJsonData(b64converter.result.split(",")[1], true);
+                    }
+                    
+                    const transmitJsonData = (data, encrypted) => {
+                        xhr.send(JSON.stringify({
+                            filename: subjectString+trialOrder+"_data",
+                            filedata: data,
+                            filetype: "json" + (encrypted ? ".enc" : ""),
+                            username: (encrypted ? username : "")
+                        }));
+                    }
+
+                    if(publicKeyString){
+                        console.log(jsPsych.data.get().json());
+                        encrypt(new TextEncoder().encode(jsPsych.data.get().json()), key).then(data => b64converter.readAsDataURL(new Blob([data])));
+                    }else{
+                        transmitJsonData(jsPsych.data.get().json(), false);
+                    }
                 })
             }
         }
@@ -462,13 +600,13 @@
             preload,
             welcome,
             permission,
-            startFullscreen,
-            initCameraTrial, 
-            calibrationTrial,
-            createValidationTrial(1),
-            videos,
-            createValidationTrial(2),
-            stopFullscreen,
+            // startFullscreen,
+            // initCameraTrial, 
+            // calibrationTrial,
+            // createValidationTrial(1),
+            // videos,
+            // createValidationTrial(2),
+            // stopFullscreen,
             startUpload,
             uploadTrial,
             ifUploadSuccess,

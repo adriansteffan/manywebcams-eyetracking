@@ -1,12 +1,31 @@
 <?php
 
+function sanitize($content){
+    $no_newlines = str_replace(array("\n", "\r"), '', $content);
+    return preg_replace('/[^\dA-Za-z_]/i', '', $no_newlines);
+}
+
+$rootpath = '/var/www/data/';
+
 $post_data = json_decode(file_get_contents('php://input'), true);
-$filename_no_newlines = str_replace(array("\n", "\r"), '', $post_data['filename']);
-$sanitized_filename = preg_replace('/[^\da-z_]/i', '', $filename_no_newlines);
+$sanitized_filename = sanitize($post_data['filename']);
+
+$user_dir = $rootpath;
+
+if ($post_data["username"] !== ""){
+    $sanitized_username = sanitize($post_data["username"]);
+    $user_dir = $rootpath . $sanitized_username . "/";
+    if(!is_dir($user_dir)){
+       if(!mkdir($user_dir)){
+           http_response_code(500);
+           die();
+       };
+    }
+}
 
 $filetype = $post_data['filetype'];
 $sanitized_filetype = '';
-if ($filetype === 'json' || $filetype === 'csv') {
+if ($filetype === 'json' || $filetype === 'json.enc' || $filetype === 'csv' || $filetype === 'csv.enc' || $filetype === 'webm.enc') {
     $data = $post_data['filedata'];
     $sanitized_filetype = $filetype;
 } else if ($filetype === 'webm') {
@@ -18,7 +37,7 @@ if ($filetype === 'json' || $filetype === 'csv') {
 }
 
 
-$name = '/var/www/data/' . $sanitized_filename . '.' .  $sanitized_filetype;
+$name = $user_dir . $sanitized_filename . '.' .  $sanitized_filetype;
 
 while (file_exists($name)) {
     $name = $name . '-' . time() . '-' . uniqid();
