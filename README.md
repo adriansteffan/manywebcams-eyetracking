@@ -77,6 +77,8 @@ To make the container reachable from the internet, refer to [these instructions]
 
 Alternatively, you can use a webserver (like apache) running and configured on your machine. This server needs to be reachable via HTTPS and support PHP. 
 
+You can refer to [this repository for a preconfigured dockerless setup](https://github.com/ccp-eva/many-webcams-frontend).
+
 On a fresh install, this would be achieved by running:
 ```
 apt-get install -y apache2 php && a2enmod ssl
@@ -99,6 +101,7 @@ Finally, the folder for the experiment data needs to be created by running
 ```
 mkdir /var/www/data && chown -R www-data:www-data /var/www/data
 ```
+(adjust the filepaths of the commands and in `writedata.php` to suit your particular setup)
 
 
 ## Development
