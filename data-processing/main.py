@@ -25,6 +25,37 @@ output_directory = "./output"
 
 exclusion_csv_path = "./excluded_trials.csv"
 
+target_aoi_location = {
+    "FAM_LL": "left",
+    "FAM_LR": "right",
+    "FAM_RL": "left",
+    "FAM_RR": "right",
+    "KNOW_LL": "right",
+    "KNOW_LR": "left",
+    "KNOW_RL": "right",
+    "KNOW_RR": "left",
+    "IG_LL": "right",
+    "IG_LR": "left",
+    "IG_RL": "right",
+    "IG_RR": "left"
+}
+
+time_of_interest_dict = {
+    "FAM_LL": 25913,
+    "FAM_LR": 25902,
+    "FAM_RL": 25918,
+    "FAM_RR": 25896,
+    "KNOW_LL": 31205,
+    "KNOW_LR": 31244,
+    "KNOW_RL": 31265,
+    "KNOW_RR": 31209,
+    "IG_LL": 29776,
+    "IG_LR": 29797,
+    "IG_RL": 29791,
+    "IG_RR": 29830,
+}
+
+list_of_stimuli_endings = [stimulus + ".webm" for stimulus in target_aoi_location.keys()]
 
 if not os.path.exists(output_directory):
     os.makedirs(output_directory)
@@ -148,10 +179,18 @@ for filename in files:
     if filename.startswith(".") or filename.endswith(".json"):
         continue
     try:
+
+        # fix for unknown number of _ in subject id
         filename_split = filename.split("_")
-        participant = "_".join(filename_split[:-2])
+
+        split_pos = -2 if filename.endswith(tuple(list_of_stimuli_endings)) else -1
+
+        participant = "_".join(filename_split[:split_pos])
+
         participants.add(participant)
-        trial = ".".join("_".join(filename_split[-2:]).split(".")[:-1])
+        trial = ".".join("_".join(filename_split[split_pos:]).split(".")[:-1])
+        print(participant)
+        print(trial)
     except:
         continue
 
@@ -159,36 +198,6 @@ for filename in files:
 
 
 videos = [t for t in trials if "_" in t]
-
-target_aoi_location = {
-    "FAM_LL": "left",
-    "FAM_LR": "right",
-    "FAM_RL": "left",
-    "FAM_RR": "right",
-    "KNOW_LL": "right",
-    "KNOW_LR": "left",
-    "KNOW_RL": "right",
-    "KNOW_RR": "left",
-    "IG_LL": "right",
-    "IG_LR": "left",
-    "IG_RL": "right",
-    "IG_RR": "left"
-}
-
-time_of_interest_dict = {
-    "FAM_LL": 25913,
-    "FAM_LR": 25902,
-    "FAM_RL": 25918,
-    "FAM_RR": 25896,
-    "KNOW_LL": 31205,
-    "KNOW_LR": 31244,
-    "KNOW_RL": 31265,
-    "KNOW_RR": 31209,
-    "IG_LL": 29776,
-    "IG_LR": 29797,
-    "IG_RL": 29791,
-    "IG_RR": 29830,
-}
 
 interval_len_of_interest = 8000
 
