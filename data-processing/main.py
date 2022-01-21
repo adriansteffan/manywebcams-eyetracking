@@ -189,8 +189,7 @@ for filename in files:
 
         participants.add(participant)
         trial = ".".join("_".join(filename_split[split_pos:]).split(".")[:-1])
-        print(participant)
-        print(trial)
+        
     except:
         continue
 
