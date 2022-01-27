@@ -75,8 +75,8 @@
         }
 
         var trialOrder = jsPsych.data.urlVariables().trial_order;
-
-        if(isNaN(trialOrder) || trialOrder !== "A" || trialOrder !== "B"){
+        
+        if(trialOrder != "A" && trialOrder != "B"){
             trialOrder = Math.random() >= 0.5 ? "A" : "B"
         }
     
