@@ -14,7 +14,7 @@ $user_dir = $rootpath;
 
 if ($post_data["username"] !== ""){
     $sanitized_username = sanitize($post_data["username"]);
-    $user_dir = $rootpath . $sanitized_username . "/";
+    $user_dir = $rootpath . "encrypted/" . $sanitized_username . "/";
     if(!is_dir($user_dir)){
        if(!mkdir($user_dir)){
            http_response_code(500);
