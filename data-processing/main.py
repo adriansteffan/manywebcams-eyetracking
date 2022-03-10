@@ -238,14 +238,17 @@ df_dict_resampled_list = []
 # Transformation to fit the analysis scripts used by the manybabies study
 for p in participants:
 
-    if not os.path.exists(output_directory+"/"+p):
-        os.makedirs(output_directory+"/"+p)
-
     json_path = data_directory + "/" + p + "_data.json"
-    with open(json_path) as f:
-        data = json.load(f)
+    try:
+        with open(json_path) as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        continue
     data = [x for x in data if 'task' in x and x['task'] == 'video']
 
+    if not os.path.exists(output_directory+"/"+p):
+        os.makedirs(output_directory+"/"+p)
+        
     # process data for participants
 
     df_dict = dict()
