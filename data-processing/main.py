@@ -9,6 +9,7 @@ from os.path import isfile, join
 import subprocess
 import pandas as pd
 import statistics
+from io import StringIO
 
 # information is not present in the data output, fix this at some point in time
 STIMULUS_ASPECT_RATIO = 4.0/3.0
@@ -206,7 +207,18 @@ exclusion_dict = dict()
 # If it exists, parse the csv for exclusions due to manual inspection
 if os.path.exists(exclusion_csv_path):
     exclusion_check_colnames = ["FAM1_OK", "FAM2_OK", "FAM3_OK", "FAM4_OK"]
-    exclusion_df = pd.read_csv(exclusion_csv_path)
+
+    with open(exclusion_csv_path) as f:
+        # check if ";" is used as delimiter
+        pos = f.tell()
+        header = f.readline()
+        f.seek(pos)
+        if header.count(";") > header.count(","):
+            csv_string = ''.join(l.replace(',', '').replace(';', ',') for l in f)
+        else:
+            csv_string = ''.join(l for l in f)
+
+        exclusion_df = pd.read_csv(StringIO(csv_string))
 
     for p_id in exclusion_df['id']:
         if p_id not in exclusion_dict:
