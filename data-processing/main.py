@@ -276,7 +276,9 @@ for p in participants:
         df_dict['trial_num'] = index + 1
         # Exclusion criteria
         # Exclusion criterion 1: tracking malfunction picked by human rater
-        if p in exclusion_dict and df_dict['trial_num'] in exclusion_dict[p]:
+
+        name_without_trialorder = "_".join(p.split("_")[:-1])
+        if name_without_trialorder in exclusion_dict and df_dict['trial_num'] in exclusion_dict[name_without_trialorder]:
             continue
 
         df_dict['stimulus'] = trial['stimulus'][0].split("/")[-1].split(".")[0]
@@ -288,7 +290,7 @@ for p in participants:
         sampling_rates = [1000 / diff for diff in sampling_diffs]
         df_dict['sampling_rate'] = statistics.mean(sampling_rates)
         if df_dict['sampling_rate'] < MIN_SAMPLING_RATE:
-            samplingrate_exlusion_trials.append(p + "_" + df_dict['stimulus'])
+            samplingrate_exlusion_trials.append(name_without_trialorder + "_" + df_dict['stimulus'])
             continue
 
 
