@@ -242,6 +242,7 @@ interval_len_of_interest = 8000
 
 
 exclusion_dict = dict()
+checked_participants = None  # list of participants listed in the exclusion_csv, used to only include the checked ones
 
 # If it exists, parse the csv for exclusions due to manual inspection
 if os.path.exists(exclusion_csv_path):
@@ -258,6 +259,8 @@ if os.path.exists(exclusion_csv_path):
             csv_string = ''.join(l for l in f)
 
         exclusion_df = pd.read_csv(StringIO(csv_string))
+
+    checked_participants = list(exclusion_df['id'])
 
     for p_id in exclusion_df['id']:
         if p_id not in exclusion_dict:
@@ -317,7 +320,7 @@ for p in participants:
         # Exclusion criterion 1: tracking malfunction picked by human rater
 
         name_without_trialorder = "_".join(p.split("_")[:-1])
-        if name_without_trialorder in exclusion_dict and df_dict['trial_num'] in exclusion_dict[name_without_trialorder]:
+        if name_without_trialorder not in checked_participants or (name_without_trialorder in exclusion_dict and df_dict['trial_num'] in exclusion_dict[name_without_trialorder]):
             continue
 
         df_dict['stimulus'] = trial['stimulus'][0].split("/")[-1].split(".")[0]
