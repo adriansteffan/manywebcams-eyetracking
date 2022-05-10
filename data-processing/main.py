@@ -242,7 +242,7 @@ interval_len_of_interest = 8000
 
 
 exclusion_dict = dict()
-checked_participants = None  # list of participants listed in the exclusion_csv, used to only include the checked ones
+checked_participants = []  # list of participants listed in the exclusion_csv, used to only include the checked ones
 
 # If it exists, parse the csv for exclusions due to manual inspection
 if os.path.exists(exclusion_csv_path):
@@ -320,7 +320,9 @@ for p in participants:
         # Exclusion criterion 1: tracking malfunction picked by human rater
 
         name_without_trialorder = "_".join(p.split("_")[:-1])
-        if name_without_trialorder not in checked_participants or (name_without_trialorder in exclusion_dict and df_dict['trial_num'] in exclusion_dict[name_without_trialorder]):
+
+        # if an exclusion file is present, only include the ones listed in the exclusion file but not excluded
+        if os.path.exists(exclusion_csv_path) and (name_without_trialorder not in checked_participants or (name_without_trialorder in exclusion_dict and df_dict['trial_num'] in exclusion_dict[name_without_trialorder])):
             continue
 
         df_dict['stimulus'] = trial['stimulus'][0].split("/")[-1].split(".")[0]
@@ -334,8 +336,6 @@ for p in participants:
         if df_dict['sampling_rate'] < MIN_SAMPLING_RATE:
             samplingrate_exlusion_trials.append(name_without_trialorder + "_" + df_dict['stimulus'])
             continue
-
-
 
         df_dict['condition'] = "fam" if "FAM" in df_dict['stimulus'] else ("knowledge" if "KNOW" in df_dict['stimulus'] else "ignorance")
 
