@@ -209,7 +209,7 @@ python main.py t
 
 This will create an `output` folder next to the script, with seperate folders for each participant. In there you can find video files that overlay the eyetracking results over the stimulus videos and add the synchronized webcam video.
 
-Next, rename the `example_excluded_trials.csv` to `excluded_trials.csv`. For every participant, look through the newly rendered videos and specify what trials to include or exclude by putting 'yes' or 'no' in the corresponding fields.
+Next, rename the `example_excluded_trials.csv` to `excluded_trials.csv`. For every participant, look through the newly rendered videos and specify what trials to include or exclude by putting 'yes' or 'no' in the corresponding fields (make sure to order the trials per row in the order they appeared for the participant).
 
 TODO: specify exact exclusion criteria / specify multi-rater system
 

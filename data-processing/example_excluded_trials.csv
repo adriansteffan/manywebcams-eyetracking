@@ -1,3 +1,3 @@
 id,FAM1,FAM1_OK,FAM2,FAM2_OK,FAM3,FAM3_OK,FAM4,FAM4_OK,comment
-Participant1,FAM_LL,yes,FAM_LR,yes,FAM_RL,yes,FAM_RR,yes,
-Participant2,FAM_LL,no,FAM_LR,no,FAM_RL,no,FAM_RR,yes,"reflection in glasses"
+Participant1,FAM_RL,yes,FAM_RR,yes,FAM_LL,yes,FAM_LR,yes,
+Participant2,FAM_LR,no,FAM_LL,no,FAM_RR,no,FAM_RL,yes,"reflection in glasses"
