@@ -289,16 +289,20 @@ samplingrate_exlusion_trials = []
 df_dict_list = []
 df_dict_resampled_list = []
 
+df_dict_validation_list = []
+
 # Transformation to fit the analysis scripts used by the manybabies study
 for p in participants:
 
     json_path = data_directory + "/" + p + "_data.json"
     try:
         with open(json_path) as f:
-            data = json.load(f)
+            data_all = json.load(f)
     except FileNotFoundError:
         continue
-    data = [x for x in data if 'task' in x and x['task'] == 'video']
+    data = [x for x in data_all if 'task' in x and x['task'] == 'video']
+
+    data_validation = [x for x in data_all if 'trial_type' in x and x['trial_type'] == 'webgazer-validate']
 
     if not os.path.exists(output_directory+"/"+p):
         os.makedirs(output_directory+"/"+p)
@@ -313,13 +317,34 @@ for p in participants:
     df_dict_resampled = dict()
     df_dict_resampled['subid'] = p
 
+    df_dict_validation = dict()
+    df_dict_validation['subid'] = p
+
+    name_without_trialorder = "_".join(p.split("_")[:-1])
+
+   # a hacky addition to allow for simple analysis of validation trials
+    for index, validation_trial in enumerate(data_validation):
+        if os.path.exists(exclusion_csv_path) and (name_without_trialorder not in checked_participants):
+            continue
+        df_dict_validation['index'] = index
+        df_dict_validation['avg_offset_x'] = validation_trial['average_offset'][0]['x']
+        df_dict_validation['avg_offset_y'] = validation_trial['average_offset'][0]['y']
+        df_dict_validation['mean_distance'] = validation_trial['average_offset'][0]['r']
+        df_dict_validation['window_width'] = data[0]["windowWidth"]  # assumes height stays constant across trials
+        df_dict_validation['window_height'] = data[0]["windowHeight"]  # assumes height stays constant across trials
+        df_dict_validation['avg_offset_x_percent'] = df_dict_validation['avg_offset_x'] / df_dict_validation['window_width'] * 100
+        df_dict_validation['avg_offset_y_percent'] = df_dict_validation['avg_offset_y'] / df_dict_validation['window_height'] * 100
+        df_dict_validation['roi_radius'] = 200  # harcoded for now, as this is not present in the data
+        df_dict_validation['gaze_percent_in_roi'] = validation_trial['percent_in_roi'][0]
+
+
+        df_dict_validation_list.append(dict(df_dict_validation))
+
     for index, trial in enumerate(data):
 
         df_dict['trial_num'] = index + 1
         # Exclusion criteria
         # Exclusion criterion 1: tracking malfunction picked by human rater
-
-        name_without_trialorder = "_".join(p.split("_")[:-1])
 
         # if an exclusion file is present, only include the ones listed in the exclusion file but not excluded
         if os.path.exists(exclusion_csv_path) and (name_without_trialorder not in checked_participants or (name_without_trialorder in exclusion_dict and df_dict['trial_num'] in exclusion_dict[name_without_trialorder])):
@@ -402,6 +427,7 @@ print(samplingrate_exlusion_trials)
 
 df = pd.DataFrame(df_dict_list)
 df_resampled = pd.DataFrame(df_dict_resampled_list)
+df_validation = pd.DataFrame(df_dict_validation_list)
 
 agg_df = df[df['t ( 0 - 8000)'] <= 4000].groupby(['subid', 'condition', 'aoi']).size()
 relative_df = agg_df.groupby(['subid', 'condition']).apply(lambda x: x / float(x.sum())).reset_index(name='freq')
@@ -429,6 +455,7 @@ fix_df = pd.DataFrame(df_fix_dict_list)
 
 if len(sys.argv) == 1 or sys.argv[1] == "p":
     df.to_csv(output_directory + "/transformed_data.csv", encoding='utf-8')
+    df_validation.to_csv(output_directory + "/validation_data.csv", encoding='utf-8')
     df_resampled.to_csv(output_directory+"/transformed_data_resampled.csv", encoding='utf-8')
     relative_df.append(fix_df).to_csv(output_directory+"/relative_data.csv", encoding='utf-8')
 
