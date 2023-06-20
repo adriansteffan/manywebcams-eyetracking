@@ -4,7 +4,8 @@ This repository is created as a part of Many Webcams, a [ManyBabies2](https://ma
 
 The code in this repo is used to run an online pilot study that aims to further test the reliability of webcam based eyetracking in infant reseearch. Due to the restrictions of the pandemic, conducting in-lab studies using conventional eye trackers is considerably more difficult than usual. We therefore employ an in-browser solution to determine if webcam-based eye tracking can help partially answer some of our questions regarding implicit ToM measures. 
 
-(Todo: Longer description of the project, instructions for conducting experiments)
+(Todo: Link the publication once it went through the review process)
+
 
 <p align="center">
 <img src="demo.gif" width="500" >
@@ -40,10 +41,17 @@ pip install -r requirements.txt
 ``` 
 in the `data-processing` directory to install the necessary dependencies. This tool will be dockerized at a later date.
 
-This project was developed and deployed on MacOS and Ubuntu systems. A setup guide for Microsoft Windows is in the works.
+This project was developed and deployed on MacOS and Ubuntu systems. The setup for Microsoft Windows could deviate from the described parts.
+
 
 
 ## Deployment
+
+To make your installation available to the internet for testing you will need two things:
+* A (Linux) server that is reachable via the public internet and that you can install software on.
+* A (sub-)domain that you can point to the server in order to generate links for the participants.
+
+If you do not have access to a server, you can alternatively run the development/testing setup described below on your computer or laptop. The program will run on a local server on your computer and will provide the same data as the remote setup, but participants need to be present in the lab with the computer (this has only been tested on MacOS and Unix-based systems so far, so some workarounds might need to be applied on Windows machines).
 
 If you are partaking in a manybabies project and need a domain or assistance with setting up this experiment, contact [adriansteffan](https://github.com/adriansteffan) via [mail](mailto:adrian.steffan@hotmail.de).
 
@@ -190,6 +198,8 @@ Note: If you are running ManyKeys, each User will have a seperate folder, filled
 
 To preprocess and visualize the eye tracking data of each participant and facilitate the pre-screening of participant videos, you can use the script provided in the `data-processing` directory. The script expects the data of the participants to be located in `prod_mb2-webcam-eyetracking/data`, so if you are running a development setup, you will need to move your data there first.
 
+As the preprocessing script grew along with the study requirements in a multi-lab setting, both the script and its usage are messy. The original version used for the study is kept for documentation purposes, however, an improved version of the preprocessing pipeline (including exclusions) can be found in [this repository](https://github.com/adriansteffan/psychology-thesis)
+
 #### No manual exclusion
 If you just want to visualize all the data without manually excluding participants, run
 
@@ -226,6 +236,23 @@ python main.py b
 ```
 
 will create the beeswarm plots for all the stimuli videos, excluding all participant trials specified in `excluded_trials.csv`.
+
+## Adapting the code to your own experiments
+
+To reuse parts of this study for your own experiments, programming experience in both Javascript and Python is required. 
+
+### Experiment
+
+To adapt the experiment presentation, you will need to be familiar with [jsPsych 6.3](https://www.jspsych.org/6.3/). We have extended the functionality of the library (see below) to provide additional features important for infant eyetracking studies.
+
+Once you are familiar with the library, you can edit the timeline present in [src/experiment.html](src/experiment.html). In there, you will also find examples of how we used our newly implemented features in the context of jsPsych (webcam video recording, aoi definition, manykeys encryption etc.). Depending on what data you upload, you might also need to adapt the PHP script found at [src/write_data.php](src/write_data.php)
+
+Deployment details (dockerfiles, folderstructure etc.) are independent of the experiment itself and can stay the same for any kind of experiment.
+
+### Preprocessing
+
+The preprocessing script is very closely tied to the study at hand. If you want to preprocess the output in a more general way for other stimuli and paradigms, refer to [this repository](https://github.com/adriansteffan/psychology-thesis).
+The code will still need modification (regarding aois, stimuli naming and files, exclusion criteria), but the changes should be substantially easier to make compared to the code found in this repository.
 
 ## Built With
 
